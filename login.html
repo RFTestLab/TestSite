@@ -10,22 +10,62 @@
     body { background:#f7fbf7; padding-bottom: 260px; } /* space for log */
     .home-btn { position: fixed; top: 12px; left: 12px; z-index: 999; }
     .controls { position: sticky; top: 12px; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .controls-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
     .frame-box { min-height: 420px; border: 1px solid #e6efe8; border-radius: 8px; overflow: hidden; background: white; }
     #log { position: fixed; left: 0; right: 0; bottom: 0; height: 240px; background: #0b1220; color: #dbeafe; padding: 12px; overflow:auto; font-family: monospace; font-size: 13px;}
     .log-line { margin-bottom:6px; }
     .vis-mode { display:inline-block; margin-right: 12px; }
     .sandbox-list { display:flex; gap:8px; flex-wrap:wrap; }
     .muted-small { font-size: .85rem; color:#6b7280; }
+
+    /* Mobile: controls kao bottom drawer + collapse */
+    @media (max-width: 767.98px) {
+      .controls {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        top: auto;
+        border-radius: 12px 12px 0 0;
+        z-index: 1100;
+        max-height: 55vh;
+        overflow:auto;
+        transform: translateY(0);
+        transition: transform .25s ease;
+      }
+      .controls.hidden-mobile {
+        transform: translateY(100%); /* sklonjeno dole */
+      }
+      #collapsed-control {
+        position: fixed;
+        right: 12px;
+        top: 12px;
+        z-index: 1200;
+        display: inline-flex !important;
+        align-items:center; justify-content:center;
+        width: 44px; height: 44px; border-radius: 999px;
+        background: var(--brand-green); color: #fff; border: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,.15);
+      }
+    }
+    /* Desktop: nema floating dugmeta */
+    @media (min-width: 768px) {
+      #collapsed-control { display:none !important; }
+    }
   </style>
 </head>
 <body>
   <a class="btn btn-sm btn-outline-secondary home-btn" href="index.html">Home</a>
 
+  <!-- Floating control dugme (samo mobil) -->
+  <button id="collapsed-control" class="d-none">Control</button>
+
   <div class="container pt-5">
     <div class="row g-4">
       <div class="col-lg-4">
-        <div class="controls">
-          <h6>Iframe controls & logging</h6>
+        <div class="controls" id="controlsPanel">
+          <div class="controls-header">
+            <h6 class="mb-0">Iframe controls & logging</h6>
+            <button id="collapsePanelBtn" class="btn btn-sm btn-light" title="Collapse (mobile)">▾</button>
+          </div>
 
           <div class="mb-2">
             <label class="form-label">Sandbox attributes</label>
@@ -48,9 +88,11 @@
             </div>
           </div>
 
-          <div class="mb-2">
+          <div class="mb-2 d-flex gap-2 flex-wrap">
             <button id="applyBtn" class="btn btn-sm btn-primary">Apply</button>
             <button id="reloadBtn" class="btn btn-sm btn-secondary">Reload iframe</button>
+            <button id="pingBtn" class="btn btn-sm btn-outline-secondary">Ping iframe</button>
+            <button id="snapshotBtn" class="btn btn-sm btn-info">Snapshot</button>
           </div>
 
           <div class="mb-2">
@@ -62,8 +104,8 @@
             <h6 class="mb-1">Quick actions</h6>
             <button id="fillLocalBtn" class="btn btn-sm btn-success">Fill local form (simulate)</button>
             <button id="clearLogBtn" class="btn btn-sm btn-warning">Clear log</button>
+            <span class="ms-2 small text-muted" id="panelStatus">status: idle</span>
           </div>
-
         </div>
 
         <div class="mt-3 form-card">
@@ -103,6 +145,15 @@
     (function(){
       const iframe = document.getElementById('evil-iframe');
       const logEl = document.getElementById('log');
+      const panel = document.getElementById('controlsPanel');
+      const collapseBtn = document.getElementById('collapsePanelBtn');
+      const collapsedCtl = document.getElementById('collapsed-control');
+      const panelStatus = document.getElementById('panelStatus');
+
+      function isMobile() {
+        return window.matchMedia('(max-width: 767.98px)').matches;
+      }
+      function setStatus(s){ panelStatus.textContent = 'status: ' + s; }
 
       function log(msg, tag='INFO') {
         const time = new Date().toLocaleTimeString();
@@ -113,9 +164,44 @@
         logEl.scrollTop = logEl.scrollHeight;
       }
 
+      // Mobile collapse handlers
+      function collapseMobilePanel() {
+        if (!isMobile()) return;
+        panel.classList.add('hidden-mobile');
+        collapsedCtl.classList.remove('d-none');
+      }
+      function expandMobilePanel() {
+        panel.classList.remove('hidden-mobile');
+        collapsedCtl.classList.add('d-none');
+      }
+
+      collapseBtn.addEventListener('click', ()=> {
+        if (isMobile()) collapseMobilePanel();
+        else panel.style.display = (panel.style.display === 'none' ? '' : 'none');
+      });
+      collapsedCtl.addEventListener('click', expandMobilePanel);
+
       // Listen to messages from iframe (EvilSite must postMessage)
       window.addEventListener('message', (ev) => {
-        // we can optionally check ev.origin to ensure it comes from expected origin
+        const data = ev.data || {};
+        if (data && data.source === 'EvilSite') {
+          const evt = data.event || 'unknown';
+          if (evt === 'EVIL_READY') {
+            log('Evil iframe ready: ' + JSON.stringify(data.payload), 'IFRAME');
+            setStatus('iframe ready');
+          } else if (evt === 'FORM_SNAPSHOT') {
+            log('Iframe snapshot: ' + JSON.stringify(data.payload && data.payload.data), 'IFRAME');
+            setStatus('snapshot');
+          } else if (evt === 'FIELD_CHANGED') {
+            log(`Iframe field changed: ${data.payload?.name} = "${data.payload?.value}"`, 'IFRAME');
+          } else if (evt === 'FORM_SUBMIT') {
+            log('Iframe form submit: ' + JSON.stringify(data.payload), 'IFRAME');
+          } else {
+            log('Iframe event ' + evt + ': ' + JSON.stringify(data.payload), 'IFRAME');
+          }
+          return;
+        }
+        // fallback
         log(`Message from iframe (${ev.origin}): ${JSON.stringify(ev.data)}`, 'IFRAME');
       });
 
@@ -140,7 +226,7 @@
       function applyControls() {
         const sand = buildSandbox();
         if (sand.trim().length === 0) {
-          iframe.removeAttribute('sandbox'); // fully sandboxless (like no sandbox attr)
+          iframe.removeAttribute('sandbox'); // NO sandbox attribute
           log('Applied sandbox: (none) - iframe has NO sandbox attribute');
         } else {
           iframe.setAttribute('sandbox', sand);
@@ -149,31 +235,25 @@
 
         // visibility:
         const vis = document.querySelector('input[name="vis"]:checked').value;
-        const container = document.getElementById('frameContainer');
         // reset styles
-        iframe.style.display = '';
-        iframe.style.opacity = '';
-        iframe.style.position = '';
-        iframe.style.left = '';
-        iframe.style.top = '';
-        iframe.style.width = '';
-        iframe.style.height = '';
-        iframe.style.visibility = '';
-        iframe.style.transform = '';
+        Object.assign(iframe.style, {
+          display:'', opacity:'', position:'', left:'', top:'', width:'', height:'', visibility:'', transform:'', pointerEvents:''
+        });
 
         if (vis === 'display-none') {
           iframe.style.display = 'none';
-          log('Visibility: display:none (iframe removed from render flow)');
+          log('Visibility: display:none');
         } else if (vis === 'opacity-zero') {
           iframe.style.opacity = '0';
-          log('Visibility: opacity:0 (still in layout, invisible)');
+          iframe.style.pointerEvents = 'none';
+          log('Visibility: opacity:0 (invisible, still in layout)');
         } else if (vis === 'offscreen') {
           iframe.style.position = 'absolute';
           iframe.style.left = '-2000px';
           iframe.style.top = '-2000px';
           iframe.style.width = '600px';
           iframe.style.height = '400px';
-          log('Visibility: off-screen (positioned outside viewport)');
+          log('Visibility: off-screen');
         } else if (vis === 'zero-size') {
           iframe.style.width = '0px';
           iframe.style.height = '0px';
@@ -184,10 +264,24 @@
         }
       }
 
-      document.getElementById('applyBtn').addEventListener('click', () => applyControls());
+      document.getElementById('applyBtn').addEventListener('click', applyControls);
       document.getElementById('reloadBtn').addEventListener('click', () => {
-        iframe.contentWindow.location.reload();
+        const src = iframe.getAttribute('src'); iframe.setAttribute('src', src);
         log('Reloaded iframe');
+      });
+
+      // ping / snapshot
+      document.getElementById('pingBtn').addEventListener('click', () => {
+        try {
+          iframe.contentWindow.postMessage({ type: 'PING_PARENT', ts: Date.now() }, '*');
+          log('Posted PING_PARENT to iframe');
+        } catch(e){ log('Failed to postMessage: ' + e, 'ERROR'); }
+      });
+      document.getElementById('snapshotBtn').addEventListener('click', () => {
+        try {
+          iframe.contentWindow.postMessage({ type: 'REQUEST_SNAPSHOT', ts: Date.now() }, '*');
+          log('Requested snapshot from iframe');
+        } catch(e){ log('Snapshot request failed: ' + e, 'ERROR'); }
       });
 
       // quick fill local simulation
@@ -204,7 +298,6 @@
       // detect iframe load
       iframe.addEventListener('load', () => {
         log(`Iframe loaded (src=${iframe.src})`, 'IFRAME');
-        // optionally send a handshake ping to iframe (if it listens)
         try {
           iframe.contentWindow.postMessage({ type: 'PING_PARENT', ts: Date.now() }, '*');
         } catch (e) {
@@ -218,7 +311,12 @@
         log('Local form submitted');
       });
 
-      // initialization log
+      // init
+      if (isMobile()) {
+        // po defaultu otvoren; ako želiš da krene sklopljen, pozovi:
+        // collapseMobilePanel();
+        collapsedCtl.classList.add('d-none');
+      }
       log('Control panel ready. Waiting for iframe messages...');
     })();
   </script>
