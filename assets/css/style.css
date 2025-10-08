@@ -1,0 +1,74 @@
+:root {
+    /* RoboForm-like palette (replace with official hexes if available) */
+    --rf-primary: #2DBB54;
+    --rf-primary-600: #229547;
+    --rf-primary-100: #E6F7EC;
+    --rf-accent: #00A86B;
+    --rf-warning: #F4B400;
+    --rf-danger: #D93025;
+    --rf-bg: #0B0F14;
+    --rf-surface: #12171E;
+    --rf-border: #263240;
+    --rf-text: #E8EDF2;
+    --rf-text-muted: #9AA7B2;
+
+
+    --bs-primary: var(--rf-primary);
+}
+
+
+body {
+    background: var(--rf-bg);
+    color: var(--rf-text);
+}
+
+.card {
+    background: var(--rf-surface);
+    border-color: var(--rf-border);
+    color: var(--rf-text);
+}
+
+.btn-primary {
+    background: var(--rf-primary);
+    border-color: var(--rf-primary);
+}
+
+.btn-outline-primary {
+    color: var(--rf-primary);
+    border-color: var(--rf-primary);
+}
+
+.form-control, .form-select {
+    background: #0E1319;
+    color: var(--rf-text);
+    border-color: var(--rf-border);
+}
+
+.form-control::placeholder {
+    color: var(--rf-text-muted);
+}
+
+.embedded-text {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed var(--rf-border);
+}
+
+
+/* small helpers for offscreen invisible variants */
+.iframe-offscreen {
+    position: absolute;
+    left: -5000px;
+    width: 1px;
+    height: 1px;
+}
+
+.iframe-invisible {
+    display: none !important;
+}
+
+
+@media (max-width: 767px) {
+    .card-body {
+        padding: 1rem;
+    }
+}
