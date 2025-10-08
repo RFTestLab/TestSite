@@ -8,104 +8,129 @@
   <style>
     :root { --brand-green: #00A859; --bg: #f7fbf7; }
     body { background:var(--bg); padding-bottom: 260px; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-    .home-btn { position: fixed; top: 12px; left: 12px; z-index: 999; }
-    .controls { position: sticky; top: 12px; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .home-btn { position: fixed; top: 12px; left: 12px; z-index: 1300; }
+
+    /* Uvek vidljivo dugme za panel (desktop + mobilni) */
+    #panelToggle {
+      position: fixed;
+      top: 12px; right: 12px;
+      z-index: 1300;
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      width: 44px; height: 44px;
+      border-radius: 999px;
+      background: var(--brand-green); color: #fff; border: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,.15);
+      cursor: pointer;
+    }
+    #panelToggle:active { transform: translateY(1px); }
+
+    /* Floating kontrolni panel – na svim uređajima */
+    .controls {
+      position: fixed;
+      right: 12px;
+      top: 64px; /* ispod toggle dugmeta */
+      width: min(380px, 92vw);
+      max-height: 70vh;
+      overflow: auto;
+      background: #fff;
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+      z-index: 1200;
+      transition: transform .25s ease;
+    }
     .controls-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+
+    /* Sklapanje – desktop: skloni udesno */
+    .controls.hidden-global {
+      transform: translateX(calc(100% + 24px));
+    }
+
+    /* Mobilni – drawer odozdo */
+    @media (max-width: 767.98px) {
+      .controls {
+        left: 12px; right: 12px;
+        width: auto;
+        top: auto; bottom: 64px;
+        max-height: 55vh;
+        border-radius: 12px;
+        transform: translateY(0);
+      }
+      /* Sklapanje – mobilni: skloni nadole */
+      .controls.hidden-global {
+        transform: translateY(calc(100% + 24px));
+      }
+    }
+
     .frame-box { min-height: 420px; border: 1px solid #e6efe8; border-radius: 8px; overflow: hidden; background: white; }
-    #log { position: fixed; left: 0; right: 0; bottom: 0; height: 240px; background: #0b1220; color: #dbeafe; padding: 12px; overflow:auto; font-family: monospace; font-size: 13px;}
+    #log { position: fixed; left: 0; right: 0; bottom: 0; height: 240px; background: #0b1220; color: #dbeafe; padding: 12px; overflow:auto; font-family: monospace; font-size: 13px; z-index: 1100; }
     .log-line { margin-bottom:6px; }
     .vis-mode { display:inline-block; margin-right: 12px; }
     .sandbox-list { display:flex; gap:8px; flex-wrap:wrap; }
     .muted-small { font-size: .85rem; color:#6b7280; }
     .form-card { background: #fff; border-radius: 8px; padding: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.04); }
     .btn-brand { background: var(--brand-green); color: #fff; border: none; }
-
-    /* Mobile bottom drawer + collapse */
-    @media (max-width: 767.98px) {
-      .controls {
-        position: fixed;
-        left: 0; right: 0; bottom: 0;
-        border-radius: 12px 12px 0 0;
-        z-index: 1100;
-        max-height: 55vh;
-        overflow:auto;
-        transform: translateY(0);
-        transition: transform .25s ease;
-      }
-      .controls.hidden-mobile { transform: translateY(100%); }
-      #collapsed-control {
-        position: fixed;
-        right: 12px; top: 12px; z-index: 1200;
-        display: inline-flex !important;
-        align-items:center; justify-content:center;
-        width: 44px; height: 44px; border-radius: 999px;
-        background: var(--brand-green); color: #fff; border: none;
-        box-shadow: 0 4px 10px rgba(0,0,0,.15);
-      }
-    }
-    @media (min-width: 768px) {
-      #collapsed-control { display:none !important; }
-    }
   </style>
 </head>
 <body>
   <a class="btn btn-sm btn-outline-secondary home-btn" href="index.html">Home</a>
 
-  <!-- Floating control dugme (samo mobil) -->
-  <button id="collapsed-control" class="d-none">Control</button>
+  <!-- Uvek vidljivo dugme za sklapanje/otvaranje panela -->
+  <button id="panelToggle" title="Toggle control panel">☰</button>
 
+  <!-- Floating kontrolni panel -->
+  <div class="controls" id="controlsPanel">
+    <div class="controls-header">
+      <h6 class="mb-0">Iframe controls & logging</h6>
+      <span class="badge text-bg-light" id="panelStatus">idle</span>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">Sandbox attributes</label>
+      <div class="sandbox-list">
+        <div><input type="checkbox" id="sb-allow-forms"> <label for="sb-allow-forms">allow-forms</label></div>
+        <div><input type="checkbox" id="sb-allow-scripts"> <label for="sb-allow-scripts">allow-scripts</label></div>
+        <div><input type="checkbox" id="sb-allow-same-origin"> <label for="sb-allow-same-origin">allow-same-origin</label></div>
+        <div><input type="checkbox" id="sb-allow-popups"> <label for="sb-allow-popups">allow-popups</label></div>
+      </div>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">Visibility mode</label>
+      <div>
+        <label class="vis-mode"><input type="radio" name="vis" value="normal" checked> Normal</label>
+        <label class="vis-mode"><input type="radio" name="vis" value="display-none"> display:none</label>
+        <label class="vis-mode"><input type="radio" name="vis" value="opacity-zero"> opacity:0</label>
+        <label class="vis-mode"><input type="radio" name="vis" value="offscreen"> off-screen</label>
+        <label class="vis-mode"><input type="radio" name="vis" value="zero-size"> 0x0</label>
+      </div>
+    </div>
+
+    <div class="mb-2 d-flex gap-2 flex-wrap">
+      <button id="applyBtn" class="btn btn-sm btn-primary">Apply</button>
+      <button id="reloadBtn" class="btn btn-sm btn-secondary">Reload iframe</button>
+      <button id="pingBtn" class="btn btn-sm btn-outline-secondary">Ping iframe</button>
+      <button id="snapshotBtn" class="btn btn-sm btn-info">Snapshot</button>
+    </div>
+
+    <div class="mb-2">
+      <small class="muted-small">Iframe URL: <strong id="iframeUrl">https://rftestlab.github.io/EvilSite/cc</strong></small>
+    </div>
+
+    <hr/>
+    <div>
+      <h6 class="mb-1">Quick actions</h6>
+      <button id="fillLocalBtn" class="btn btn-sm btn-success">Fill local form (simulate)</button>
+      <button id="clearLogBtn" class="btn btn-sm btn-warning">Clear log</button>
+    </div>
+  </div>
+
+  <!-- Sadržaj stranice -->
   <div class="container pt-5">
     <div class="row g-4">
       <div class="col-lg-4">
-        <div class="controls" id="controlsPanel">
-          <div class="controls-header">
-            <h6 class="mb-0">Iframe controls & logging</h6>
-            <button id="collapsePanelBtn" class="btn btn-sm btn-light" title="Collapse (mobile)">▾</button>
-          </div>
-
-          <div class="mb-2">
-            <label class="form-label">Sandbox attributes</label>
-            <div class="sandbox-list">
-              <div><input type="checkbox" id="sb-allow-forms"> <label for="sb-allow-forms">allow-forms</label></div>
-              <div><input type="checkbox" id="sb-allow-scripts"> <label for="sb-allow-scripts">allow-scripts</label></div>
-              <div><input type="checkbox" id="sb-allow-same-origin"> <label for="sb-allow-same-origin">allow-same-origin</label></div>
-              <div><input type="checkbox" id="sb-allow-popups"> <label for="sb-allow-popups">allow-popups</label></div>
-            </div>
-          </div>
-
-          <div class="mb-2">
-            <label class="form-label">Visibility mode</label>
-            <div>
-              <label class="vis-mode"><input type="radio" name="vis" value="normal" checked> Normal</label>
-              <label class="vis-mode"><input type="radio" name="vis" value="display-none"> display:none</label>
-              <label class="vis-mode"><input type="radio" name="vis" value="opacity-zero"> opacity:0</label>
-              <label class="vis-mode"><input type="radio" name="vis" value="offscreen"> off-screen</label>
-              <label class="vis-mode"><input type="radio" name="vis" value="zero-size"> 0x0</label>
-            </div>
-          </div>
-
-          <div class="mb-2 d-flex gap-2 flex-wrap">
-            <button id="applyBtn" class="btn btn-sm btn-primary">Apply</button>
-            <button id="reloadBtn" class="btn btn-sm btn-secondary">Reload iframe</button>
-            <button id="pingBtn" class="btn btn-sm btn-outline-secondary">Ping iframe</button>
-            <button id="snapshotBtn" class="btn btn-sm btn-info">Snapshot</button>
-          </div>
-
-          <div class="mb-2">
-            <small class="muted-small">Iframe URL: <strong id="iframeUrl">https://rftestlab.github.io/EvilSite/cc</strong></small>
-          </div>
-
-          <hr/>
-          <div>
-            <h6 class="mb-1">Quick actions</h6>
-            <button id="fillLocalBtn" class="btn btn-sm btn-success">Fill local form (simulate)</button>
-            <button id="clearLogBtn" class="btn btn-sm btn-warning">Clear log</button>
-            <span class="ms-2 small text-muted" id="panelStatus">status: idle</span>
-          </div>
-
-        </div>
-
-        <div class="mt-3 form-card">
+        <div class="form-card">
           <h5>Local Credit Card Form (parent)</h5>
           <form id="local-cc-form" autocomplete="on">
             <div class="mb-2">
@@ -129,7 +154,6 @@
             <button type="submit" class="btn btn-brand">Save card</button>
           </form>
         </div>
-
       </div>
 
       <div class="col-lg-8">
@@ -153,12 +177,8 @@
       const iframe = document.getElementById('evil-iframe');
       const logEl = document.getElementById('log');
       const panel = document.getElementById('controlsPanel');
-      const collapseBtn = document.getElementById('collapsePanelBtn');
-      const collapsedCtl = document.getElementById('collapsed-control');
+      const toggleBtn = document.getElementById('panelToggle');
       const panelStatus = document.getElementById('panelStatus');
-
-      function isMobile(){ return window.matchMedia('(max-width: 767.98px)').matches; }
-      function setStatus(s){ panelStatus.textContent = 'status: ' + s; }
 
       function log(msg, tag='INFO') {
         const time = new Date().toLocaleTimeString();
@@ -168,30 +188,24 @@
         logEl.appendChild(line);
         logEl.scrollTop = logEl.scrollHeight;
       }
+      function setStatus(s){ panelStatus.textContent = s; }
 
-      function collapseMobilePanel() {
-        if (!isMobile()) return;
-        panel.classList.add('hidden-mobile');
-        collapsedCtl.classList.remove('d-none');
+      // Global toggle (uvek prisutan)
+      function togglePanel(){
+        const hidden = panel.classList.toggle('hidden-global');
+        toggleBtn.setAttribute('aria-pressed', String(!hidden));
+        toggleBtn.title = hidden ? 'Show controls' : 'Hide controls';
       }
-      function expandMobilePanel() {
-        panel.classList.remove('hidden-mobile');
-        collapsedCtl.classList.add('d-none');
-      }
-      collapseBtn.addEventListener('click', ()=> {
-        if (isMobile()) collapseMobilePanel();
-        else panel.style.display = (panel.style.display === 'none' ? '' : 'none');
-      });
-      collapsedCtl.addEventListener('click', expandMobilePanel);
+      toggleBtn.addEventListener('click', togglePanel);
 
-      // Messaging from iframe (structured preferred)
+      // postMessage iz iframe-a
       window.addEventListener('message', (ev) => {
         const data = ev.data || {};
         if (data && data.source === 'EvilSite') {
           const evt = data.event || 'unknown';
           if (evt === 'EVIL_READY') {
             log('Evil iframe ready: ' + JSON.stringify(data.payload), 'IFRAME');
-            setStatus('iframe ready');
+            setStatus('ready');
           } else if (evt === 'FORM_SNAPSHOT') {
             log('Iframe snapshot: ' + JSON.stringify(data.payload && data.payload.data), 'IFRAME');
             setStatus('snapshot');
@@ -204,19 +218,18 @@
           }
           return;
         }
-        // fallback generic
         log(`Message from iframe (${ev.origin}): ${JSON.stringify(ev.data)}`, 'IFRAME');
       });
 
-      // local CC form changes -> log
+      // local form logging
       const localForm = document.getElementById('local-cc-form');
       ['input','change'].forEach(evName => {
         localForm.addEventListener(evName, (e) => {
-          log(`Local form change: ${e.target.id} = "${e.target.value}"`);
+          log(`Local CC form change: ${e.target.id} = "${e.target.value}"`);
         });
       });
 
-      // sandbox handling + visibility
+      // sandbox handling
       function buildSandbox() {
         const parts = [];
         if (document.getElementById('sb-allow-forms').checked) parts.push('allow-forms');
@@ -229,16 +242,17 @@
       function applyControls() {
         const sand = buildSandbox();
         if (sand.trim().length === 0) {
-          iframe.removeAttribute('sandbox');
+          iframe.removeAttribute('sandbox'); // bez sandbox atributa
           log('Applied sandbox: (none) - iframe has NO sandbox attribute');
         } else {
           iframe.setAttribute('sandbox', sand);
           log('Applied sandbox: ' + sand);
         }
 
+        // visibility:
         const vis = document.querySelector('input[name="vis"]:checked').value;
         Object.assign(iframe.style, {
-          display:'', opacity:'', position:'', left:'', top:'', width:'', height:'', visibility:'', transform:'', pointerEvents:''
+          display:'', opacity:'', position:'', left:'', top:'', width:'', height:'', visibility:'', transform:'', pointerEvents:'', border:''
         });
 
         if (vis === 'display-none') {
@@ -247,7 +261,7 @@
         } else if (vis === 'opacity-zero') {
           iframe.style.opacity = '0';
           iframe.style.pointerEvents = 'none';
-          log('Visibility: opacity:0');
+          log('Visibility: opacity:0 (invisible, still in layout)');
         } else if (vis === 'offscreen') {
           iframe.style.position = 'absolute';
           iframe.style.left = '-2000px';
@@ -259,7 +273,7 @@
           iframe.style.width = '0px';
           iframe.style.height = '0px';
           iframe.style.border = '0';
-          log('Visibility: zero-size');
+          log('Visibility: zero-size (0x0)');
         } else {
           log('Visibility: normal');
         }
@@ -270,8 +284,6 @@
         const src = iframe.getAttribute('src'); iframe.setAttribute('src', src);
         log('Reloaded iframe');
       });
-
-      // ping / snapshot
       document.getElementById('pingBtn').addEventListener('click', () => {
         try {
           iframe.contentWindow.postMessage({ type: 'PING_PARENT', ts: Date.now() }, '*');
@@ -308,14 +320,12 @@
         }
       });
 
-      // local submit
+      // submit handler local
       localForm.addEventListener('submit', (e) => {
         e.preventDefault();
         log('Local CC form submitted');
       });
 
-      // init
-      if (isMobile()) { collapsedCtl.classList.add('d-none'); }
       log('Control panel ready. Waiting for iframe messages...');
     })();
   </script>
