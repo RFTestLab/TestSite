@@ -10,7 +10,7 @@
     body { background:#f7fbf7; padding-bottom: 260px; } /* space for log */
     .home-btn { position: fixed; top: 12px; left: 12px; z-index: 1300; }
 
-    /* Floating toggle dugme – uvek vidljivo (desktop + mobile) */
+    /* Floating toggle button (desktop + mobile) */
     #panelToggle {
       position: fixed;
       top: 12px; right: 12px;
@@ -25,11 +25,11 @@
     }
     #panelToggle:active { transform: translateY(1px); }
 
-    /* Kontrolni panel – floating na svim uređajima */
+    /* Control panel */
     .controls {
       position: fixed;
       right: 12px;
-      top: 64px; /* ispod toggle dugmeta */
+      top: 64px; 
       width: min(380px, 92vw);
       max-height: 70vh;
       overflow: auto;
@@ -42,12 +42,12 @@
     }
     .controls-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 
-    /* Kad je sklopljen na DESKTOPU: skloni ga udesno */
+    
     .controls.hidden-global {
       transform: translateX(calc(100% + 24px));
     }
 
-    /* MOBILE drawer stil */
+    /* MOBILE drawer still */
     @media (max-width: 767.98px) {
       .controls {
         left: 12px; right: 12px;
@@ -57,7 +57,7 @@
         border-radius: 12px;
         transform: translateY(0);
       }
-      /* Kad je sklopljen na MOBILU: skloni ga nadole */
+      
       .controls.hidden-global {
         transform: translateY(calc(100% + 24px));
       }
@@ -74,10 +74,10 @@
 <body>
   <a class="btn btn-sm btn-outline-secondary home-btn" href="index.html">Home</a>
 
-  <!-- Uvek vidljivo dugme za sklapanje/otvaranje panela -->
+  <!-- Panel button -->
   <button id="panelToggle" title="Toggle control panel">☰</button>
 
-  <!-- Floating kontrolni panel -->
+  <!-- Floating control panel -->
   <div class="controls" id="controlsPanel">
     <div class="controls-header">
       <h6 class="mb-0">Iframe controls & logging</h6>
@@ -124,7 +124,7 @@
     </div>
   </div>
 
-  <!-- Sadržaj stranice (grid) -->
+  <!-- Page content -->
   <div class="container pt-5">
     <div class="row g-4">
       <div class="col-lg-4">
@@ -178,7 +178,7 @@
       }
       function setStatus(s){ panelStatus.textContent = s; }
 
-      // Global toggle (uvek prisutan)
+      // Global toggle 
       function togglePanel(){
         const hidden = panel.classList.toggle('hidden-global');
         toggleBtn.setAttribute('aria-pressed', String(!hidden));
@@ -186,7 +186,7 @@
       }
       toggleBtn.addEventListener('click', togglePanel);
 
-      // postMessage iz iframe-a
+      // postMessage from iframe
       window.addEventListener('message', (ev) => {
         const data = ev.data || {};
         if (data && data.source === 'EvilSite') {
