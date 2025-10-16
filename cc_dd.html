@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Login Test (different domain iframe) (with iframe controls & log)</title>
+  <title>Credit Card Test (with iframe controls & log)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    :root { --brand-green: #00A859; }
-    body { background:#f7fbf7; padding-bottom: 260px; } /* space for log */
+    :root { --brand-green: #00A859; --bg: #f7fbf7; }
+    body { background:var(--bg); padding-bottom: 260px; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
     .home-btn { position: fixed; top: 12px; left: 12px; z-index: 1300; }
 
-    /* Floating toggle button (desktop + mobile) */
+    /* panel button */
     #panelToggle {
       position: fixed;
       top: 12px; right: 12px;
@@ -25,7 +25,7 @@
     }
     #panelToggle:active { transform: translateY(1px); }
 
-    /* Control panel */
+    /* Floating  panel  */
     .controls {
       position: fixed;
       right: 12px;
@@ -42,17 +42,17 @@
     }
     .controls-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 
-    
+   
     .controls.hidden-global {
       transform: translateX(calc(100% + 24px));
     }
 
-    /* MOBILE drawer still */
+   
     @media (max-width: 767.98px) {
       .controls {
         left: 12px; right: 12px;
         width: auto;
-        top: auto; bottom: 64px; /* malo iznad log-a */
+        top: auto; bottom: 64px;
         max-height: 55vh;
         border-radius: 12px;
         transform: translateY(0);
@@ -69,12 +69,14 @@
     .vis-mode { display:inline-block; margin-right: 12px; }
     .sandbox-list { display:flex; gap:8px; flex-wrap:wrap; }
     .muted-small { font-size: .85rem; color:#6b7280; }
+    .form-card { background: #fff; border-radius: 8px; padding: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.04); }
+    .btn-brand { background: var(--brand-green); color: #fff; border: none; }
   </style>
 </head>
 <body>
   <a class="btn btn-sm btn-outline-secondary home-btn" href="index.html">Home</a>
 
-  <!-- Panel button -->
+  <!-- Panel button  -->
   <button id="panelToggle" title="Toggle control panel">☰</button>
 
   <!-- Floating control panel -->
@@ -113,7 +115,7 @@
     </div>
 
     <div class="mb-2">
-      <small class="muted-small">Iframe URL: <strong id="iframeUrl">https://evilsite.pages.dev/login</strong></small>
+      <small class="muted-small">Iframe URL: <strong id="iframeUrl">https://evilsite.pages.dev/cc</strong></small>
     </div>
 
     <hr/>
@@ -128,18 +130,28 @@
   <div class="container pt-5">
     <div class="row g-4">
       <div class="col-lg-4">
-        <div class="mt-3 form-card">
-          <h5>Local Login Form (parent)</h5>
-          <form id="local-login-form" autocomplete="on">
+        <div class="form-card">
+          <h5>Local Credit Card Form (parent)</h5>
+          <form id="local-cc-form" autocomplete="on">
             <div class="mb-2">
-              <label for="email">Email</label>
-              <input autocomplete="username" id="email" class="form-control" placeholder="you@example.com">
+              <label for="cc-name" class="form-label">Cardholder name</label>
+              <input autocomplete="cc-name" id="cc-name" class="form-control" placeholder="JOHN DOE">
             </div>
             <div class="mb-2">
-              <label for="password">Password</label>
-              <input autocomplete="current-password" id="password" class="form-control" placeholder="••••••">
+              <label for="cc-number" class="form-label">Card number</label>
+              <input autocomplete="cc-number" id="cc-number" class="form-control" placeholder="4242 4242 4242 4242" inputmode="numeric">
             </div>
-            <button type="submit" class="btn" style="background:var(--brand-green);color:#fff">Sign in</button>
+            <div class="row">
+              <div class="col-6 mb-2">
+                <label for="cc-exp" class="form-label">Expiry</label>
+                <input autocomplete="cc-exp" id="cc-exp" class="form-control" placeholder="MM/YY">
+              </div>
+              <div class="col-6 mb-2">
+                <label for="cc-csc" class="form-label">CVC</label>
+                <input autocomplete="cc-csc" id="cc-csc" class="form-control" placeholder="123" inputmode="numeric">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-brand">Save card</button>
           </form>
         </div>
       </div>
@@ -147,8 +159,8 @@
       <div class="col-lg-8">
         <div id="frameContainer" class="frame-box">
           <iframe id="evil-iframe"
-                  src="https://evilsite.pages.dev/login"
-                  title="Evil login embed"
+                  src="https://evilsite.pages.dev/cc"
+                  title="Evil cc embed"
                   width="100%" height="100%"
                   style="border:0; min-height:420px;"
                   sandbox="">
@@ -209,11 +221,11 @@
         log(`Message from iframe (${ev.origin}): ${JSON.stringify(ev.data)}`, 'IFRAME');
       });
 
-      // local form log
-      const localForm = document.getElementById('local-login-form');
+      // local form logging
+      const localForm = document.getElementById('local-cc-form');
       ['input','change'].forEach(evName => {
         localForm.addEventListener(evName, (e) => {
-          log(`Local form change: ${e.target.id} = "${e.target.value}"`);
+          log(`Local CC form change: ${e.target.id} = "${e.target.value}"`);
         });
       });
 
@@ -230,7 +242,7 @@
       function applyControls() {
         const sand = buildSandbox();
         if (sand.trim().length === 0) {
-          iframe.removeAttribute('sandbox');
+          iframe.removeAttribute('sandbox'); // no sandbox atribut
           log('Applied sandbox: (none) - iframe has NO sandbox attribute');
         } else {
           iframe.setAttribute('sandbox', sand);
@@ -287,9 +299,11 @@
 
       // quick fill local simulation
       document.getElementById('fillLocalBtn').addEventListener('click', () => {
-        document.getElementById('email').value = 'alice@example.com';
-        document.getElementById('password').value = 'P@ssw0rd';
-        log('Local form prefilled programmatically');
+        document.getElementById('cc-name').value = 'Alice Example';
+        document.getElementById('cc-number').value = '4242424242424242';
+        document.getElementById('cc-exp').value = '12/34';
+        document.getElementById('cc-csc').value = '123';
+        log('Local CC form prefilled programmatically');
       });
 
       document.getElementById('clearLogBtn').addEventListener('click', () => {
@@ -309,7 +323,7 @@
       // submit handler local
       localForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        log('Local form submitted');
+        log('Local CC form submitted');
       });
 
       log('Control panel ready. Waiting for iframe messages...');
