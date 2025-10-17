@@ -58,7 +58,7 @@
     (function(){
       function q(name){const u=new URL(window.location.href);return u.searchParams.get(name)}
       const type = q('type') || 'login'
-      const originLabel = q('origin') || document.referrer || 'nepoznato'
+      const originLabel = q('origin') || document.referrer || 'Unknown'
       document.getElementById('typeVal').textContent = type
       document.getElementById('originVal').textContent = originLabel
       const message = type === 'card' ? 'Credit card data accepted. Dont use real Credit card data here.' : 'Credentials sent. Login simulation succesfull.'
