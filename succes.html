@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Succesfull submit</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Minimal local styles to guarantee decent look even if global styles differ */
+    :root{--accent:#2dd4bf;--bg:#0f172a;--card:#0b1220;--muted:#9aa4b2}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+    body{background:linear-gradient(180deg,#071020 0%, #081526 60%);display:flex;align-items:center;justify-content:center;padding:32px;color:#e6eef6}
+    .wrap{width:100%;max-width:920px}
+    .card{background:var(--card);border-radius:14px;padding:28px;box-shadow:0 8px 30px rgba(2,6,23,0.6);display:flex;gap:20px;align-items:center}
+    .icon{width:84px;height:84px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),#06b6d4);box-shadow:0 6px 18px rgba(3,7,18,0.6)}
+    .icon svg{width:46px;height:46px;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.35))}
+    .content{flex:1}
+    h1{margin:0 0 6px;font-size:22px}
+    p{margin:0;color:var(--muted)}
+    .meta{margin-top:14px;color:#b6c3d3;font-size:13px}
+    .actions{display:flex;gap:10px;margin-left:12px}
+    .btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.04);padding:10px 14px;border-radius:10px;color:#eaf2f8;cursor:pointer}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);opacity:0.85}
+    .small{font-size:13px;color:var(--muted)}
+    .details{margin-top:12px;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;font-family:monospace;font-size:13px;color:#c7d7e8}
+    /* confetti */
+    .confetti{position:fixed;inset:0;pointer-events:none}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="status" aria-live="polite">
+      <div class="icon" id="icon">
+        <!-- check icon -->
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+          <path d="M20 6L9 17l-5-5" stroke="#022" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="12" cy="12" r="11" stroke="rgba(255,255,255,0.08)" stroke-width="1.2" fill="transparent"/>
+        </svg>
+      </div>
+      <div class="content">
+        <h1 id="title">Succesfully submited</h1>
+        <p id="message">Data sent</p>
+        <div class="meta small" id="meta">Tipe: <span id="typeVal">login</span> · Origin: <span id="originVal">—</span></div>
+        <div class="details" id="details" aria-hidden="true"><Details></Details>: <br/><span id="raw"></span></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="closeBtn">Close</button>
+        <button class="btn secondary" id="moreBtn">More</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confetti hidden" id="confetti"></div>
+
+  <script>
+    // Page behaviour: read ?type=login|card and show appropriate message.
+    (function(){
+      function q(name){const u=new URL(window.location.href);return u.searchParams.get(name)}
+      const type = q('type') || 'login'
+      const originLabel = q('origin') || document.referrer || 'nepoznato'
+      document.getElementById('typeVal').textContent = type
+      document.getElementById('originVal').textContent = originLabel
+      const message = type === 'card' ? 'Credit card data accepted. Dont use real Credit card data here.' : 'Credentials sent. Login simulation succesfull.'
+      document.getElementById('message').textContent = message
+
+      // show/hide details
+      const details = document.getElementById('details')
+      document.getElementById('moreBtn').addEventListener('click', ()=>{
+        details.classList.toggle('hidden')
+        details.setAttribute('aria-hidden', details.classList.contains('hidden'))
+      })
+
+      document.getElementById('closeBtn').addEventListener('click', ()=>{
+        // if inside iframe, postMessage parent about success
+        if(window.self !== window.top){
+          try{
+            const payload = {type:'SUCCESS', method:type, timestamp:Date.now(), origin: originLabel}
+            // try to send to parent with safe origin when possible
+            let target = '*'
+            try{ target = new URL(document.referrer).origin || '*'}catch(e){}
+            window.parent.postMessage(payload, target)
+          }catch(e){/*ignore*/}
+        }
+        // fallback: close window or navigate back
+        if(window.close){ window.close() }
+        // try history back
+        try{ history.back() }catch(e){}
+      })
+
+      // also listen for postMessage from parent to display debug info
+      window.addEventListener('message', (ev)=>{
+        // basic origin check: if parent provided a "allowedOrigin" param via query, enforce it
+        const allowed = q('allowedOrigin')
+        if(allowed && ev.origin !== allowed) return
+        const data = ev.data || {}
+        // if message is READY or SNAPSHOT, show details
+        document.getElementById('raw').textContent = JSON.stringify(data, null, 2)
+        details.classList.remove('hidden')
+        details.setAttribute('aria-hidden', 'false')
+      }, false)
+
+      // tiny confetti burst (pure CSS/DOM)
+      function burst(){
+        const root = document.getElementById('confetti'); root.classList.remove('hidden')
+        for(let i=0;i<18;i++){
+          const el = document.createElement('div')
+          el.style.position='absolute'
+          el.style.left = Math.random()*100+'%'
+          el.style.top = Math.random()*30+'%'
+          el.style.width = (6+Math.random()*10)+'px'
+          el.style.height = el.style.width
+          el.style.borderRadius='2px'
+          el.style.opacity = 0.95
+          el.style.transform = 'translateY(0) rotate('+Math.random()*360+'deg)'
+          el.style.background = ['#06b6d4','#34d399','#60a5fa','#f472b6'][Math.floor(Math.random()*4)]
+          el.style.transition = 'transform 900ms cubic-bezier(.2,.8,.2,1), opacity 900ms'
+          root.appendChild(el)
+          setTimeout(()=>{
+            el.style.transform = 'translateY(350px) rotate('+ (Math.random()*720-360) +'deg) translateX('+ (Math.random()*400-200) +'px)'
+            el.style.opacity=0
+          }, 40+i*20)
+          setTimeout(()=>el.remove(), 1100)
+        }
+        setTimeout(()=>root.classList.add('hidden'), 1200)
+      }
+
+      // show confetti when loaded
+      setTimeout(burst, 250)
+
+      // expose a helper for parent pages to call: successPage.report({..})
+      window._successPage = {report:(obj)=>{document.getElementById('raw').textContent = JSON.stringify(obj, null, 2); details.classList.remove('hidden')}}
+
+    })()
+  </script>
+</body>
+</html>
