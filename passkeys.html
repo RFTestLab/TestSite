@@ -5,212 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Passkey Security Tests</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    :root { --brand-green: #00A859; }
-
-    body {
-      background: #f7fbf7;
-      padding-bottom: 260px;
-    }
-
-    .home-btn {
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 1300;
-    }
-
-    #panelToggle {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      z-index: 1300;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 44px;
-      height: 44px;
-      border-radius: 999px;
-      background: var(--brand-green);
-      color: #fff;
-      border: none;
-      box-shadow: 0 4px 10px rgba(0,0,0,.15);
-      cursor: pointer;
-    }
-
-    #panelToggle:active {
-      transform: translateY(1px);
-    }
-
-    .controls {
-      position: fixed;
-      right: 12px;
-      top: 64px;
-      width: min(420px, 92vw);
-      max-height: 72vh;
-      overflow: auto;
-      background: #fff;
-      padding: 12px;
-      border-radius: 12px;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-      z-index: 1200;
-      transition: transform .25s ease;
-    }
-
-    .controls.hidden-global {
-      transform: translateX(calc(100% + 24px));
-    }
-
-    .controls-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    @media (max-width: 767.98px) {
-      .controls {
-        left: 12px;
-        right: 12px;
-        width: auto;
-        top: auto;
-        bottom: 64px;
-        max-height: 55vh;
-        border-radius: 12px;
-        transform: translateY(0);
-      }
-
-      .controls.hidden-global {
-        transform: translateY(calc(100% + 24px));
-      }
-    }
-
-    .test-card {
-      background: #fff;
-      border: 1px solid #e6efe8;
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.04);
-      height: 100%;
-    }
-
-    .result-box {
-      margin-top: 10px;
-      padding: 10px 12px;
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-    }
-
-    .mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      word-break: break-word;
-    }
-
-    .muted-small {
-      font-size: .85rem;
-      color: #6b7280;
-    }
-
-    .status-pill {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: .8rem;
-      font-weight: 600;
-      background: #eef2f7;
-      color: #334155;
-    }
-
-    .status-idle {
-      background: #eef2f7;
-      color: #334155;
-    }
-
-    .status-good {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .status-bad {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .status-warn {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    pre.output {
-      min-height: 170px;
-      max-height: 320px;
-      overflow: auto;
-      background: #0b1220;
-      color: #dbeafe;
-      padding: 12px;
-      border-radius: 10px;
-      font-family: monospace;
-      font-size: 13px;
-      margin-top: 12px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    textarea.form-control {
-      min-height: 140px;
-    }
-
-    #log {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 240px;
-      background: #0b1220;
-      color: #dbeafe;
-      padding: 12px;
-      overflow: auto;
-      font-family: monospace;
-      font-size: 13px;
-      z-index: 1100;
-    }
-
-    .log-line {
-      margin-bottom: 6px;
-    }
-
-    .btn-brand {
-      background: var(--brand-green);
-      color: #fff;
-      border: none;
-    }
-
-    .btn-brand:hover,
-    .btn-brand:focus {
-      background: #008d4c;
-      color: #fff;
-    }
-
-    .section-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .list-tight {
-      padding-left: 18px;
-      margin-bottom: 0;
-    }
-  </style>
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
-  <a class="btn btn-sm btn-outline-secondary home-btn" href="index.html">Home</a>
+<body class="rf-page">
+  <a class="btn btn-sm btn-outline-secondary rf-home-btn" href="index.html">Home</a>
+  <button id="panelToggle" class="rf-panel-toggle" title="Toggle control panel" aria-label="Toggle control panel">☰</button>
 
-  <button id="panelToggle" title="Toggle control panel">☰</button>
-
-  <div class="controls" id="controlsPanel">
-    <div class="controls-header">
+  <div class="rf-controls" id="controlsPanel">
+    <div class="rf-controls-header">
       <h6 class="mb-0">Passkey controls & logging</h6>
       <span class="badge text-bg-light" id="panelStatus">idle</span>
     </div>
@@ -219,9 +21,7 @@
       <label class="form-label">Auto-run options</label>
       <div class="form-check">
         <input class="form-check-input" type="checkbox" id="autoRunSilentGet">
-        <label class="form-check-label" for="autoRunSilentGet">
-          Auto-run Silent Get on page load
-        </label>
+        <label class="form-check-label" for="autoRunSilentGet">Auto-run Silent Get on page load</label>
       </div>
     </div>
 
@@ -244,7 +44,7 @@
     </div>
   </div>
 
-  <div class="container pt-5">
+  <main class="container pt-5">
     <div class="row mb-4">
       <div class="col-12">
         <div class="test-card">
@@ -257,6 +57,7 @@
             <div class="col-md-6">
               <div class="result-box">
                 <div><strong>Origin:</strong> <span id="origin" class="mono"></span></div>
+                <div><strong>Secure context:</strong> <span id="secureContext"></span></div>
                 <div><strong>Has WebAuthn:</strong> <span id="webauthnSupport"></span></div>
               </div>
             </div>
@@ -280,20 +81,12 @@
       <div class="col-lg-6">
         <div class="test-card">
           <div class="section-title">1) Silent Get Test</div>
-          <p class="muted-small">
-            Calls <code>navigator.credentials.get()</code> without click. This is the closest simple simulation of a script-driven trigger.
-          </p>
-
+          <p class="muted-small">Calls <code>navigator.credentials.get()</code> without click when auto-run is enabled, or from this manual trigger for repeatability.</p>
           <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
             <button class="btn btn-sm btn-brand" id="runSilentGetBtn">Run Silent Get</button>
             <span id="silentGetStatus" class="status-pill status-idle">Not run</span>
           </div>
-
-          <div class="result-box">
-            <strong>Expected safe result:</strong>
-            <div class="muted-small">Blocked, canceled, or gated behind explicit user/system interaction.</div>
-          </div>
-
+          <div class="result-box"><strong>Expected safe result:</strong><div class="muted-small">Blocked, canceled, or gated behind explicit user/system interaction.</div></div>
           <pre id="silentGetOutput" class="output">No output yet.</pre>
         </div>
       </div>
@@ -301,20 +94,12 @@
       <div class="col-lg-6">
         <div class="test-card">
           <div class="section-title">2) Gesture Get Test</div>
-          <p class="muted-small">
-            Calls <code>navigator.credentials.get()</code> from a user click.
-          </p>
-
+          <p class="muted-small">Calls <code>navigator.credentials.get()</code> from a user click.</p>
           <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
             <button class="btn btn-sm btn-brand" id="runGestureGetBtn">Run Gesture Get</button>
             <span id="gestureGetStatus" class="status-pill status-idle">Not run</span>
           </div>
-
-          <div class="result-box">
-            <strong>Expected safe result:</strong>
-            <div class="muted-small">Credential flow appears only after click, with visible system passkey UI.</div>
-          </div>
-
+          <div class="result-box"><strong>Expected safe result:</strong><div class="muted-small">Credential flow appears only after click, with visible system passkey UI.</div></div>
           <pre id="gestureGetOutput" class="output">No output yet.</pre>
         </div>
       </div>
@@ -322,20 +107,12 @@
       <div class="col-lg-6">
         <div class="test-card">
           <div class="section-title">3) Silent Create Test</div>
-          <p class="muted-small">
-            Calls <code>navigator.credentials.create()</code> without click.
-          </p>
-
+          <p class="muted-small">Calls <code>navigator.credentials.create()</code> as the silent-create scenario. Review whether user confirmation is enforced.</p>
           <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
             <button class="btn btn-sm btn-brand" id="runSilentCreateBtn">Run Silent Create</button>
             <span id="silentCreateStatus" class="status-pill status-idle">Not run</span>
           </div>
-
-          <div class="result-box">
-            <strong>Expected safe result:</strong>
-            <div class="muted-small">Blocked, canceled, or requiring explicit confirmation and system UI.</div>
-          </div>
-
+          <div class="result-box"><strong>Expected safe result:</strong><div class="muted-small">Blocked, canceled, or requiring explicit confirmation and system UI.</div></div>
           <pre id="silentCreateOutput" class="output">No output yet.</pre>
         </div>
       </div>
@@ -343,20 +120,12 @@
       <div class="col-lg-6">
         <div class="test-card">
           <div class="section-title">4) Gesture Create Test</div>
-          <p class="muted-small">
-            Calls <code>navigator.credentials.create()</code> from a user click.
-          </p>
-
+          <p class="muted-small">Calls <code>navigator.credentials.create()</code> from a user click.</p>
           <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
             <button class="btn btn-sm btn-brand" id="runGestureCreateBtn">Run Gesture Create</button>
             <span id="gestureCreateStatus" class="status-pill status-idle">Not run</span>
           </div>
-
-          <div class="result-box">
-            <strong>Expected safe result:</strong>
-            <div class="muted-small">Credential creation only after user action and visible platform confirmation.</div>
-          </div>
-
+          <div class="result-box"><strong>Expected safe result:</strong><div class="muted-small">Credential creation only after user action and visible platform confirmation.</div></div>
           <pre id="gestureCreateOutput" class="output">No output yet.</pre>
         </div>
       </div>
@@ -364,12 +133,9 @@
 
     <div class="row g-4 mt-1">
       <div class="col-12">
-        <div class="test-card">
+        <div class="test-card" id="notesCard">
           <div class="section-title">Manual Notes</div>
-          <p class="muted-small">
-            Note whether biometric prompt appeared, which handler opened, whether anything happened silently, and what Android / browser / app combination you used.
-          </p>
-
+          <p class="muted-small">Note whether biometric prompt appeared, which handler opened, whether anything happened silently, and what Android / browser / app combination you used.</p>
           <textarea id="manualNotes" class="form-control" placeholder="Example:
 - Device:
 - Android version:
@@ -379,9 +145,7 @@
 - Gesture Get result:
 - Silent Create result:
 - Gesture Create result:
-- Did biometric / passkey picker appear?
-"></textarea>
-
+- Did biometric / passkey picker appear?"></textarea>
           <div class="mt-3 d-flex gap-2 flex-wrap">
             <button id="copyNotesBtn" class="btn btn-sm btn-outline-secondary">Copy notes</button>
             <button id="copySummaryBtn" class="btn btn-sm btn-outline-secondary">Copy test summary</button>
@@ -389,147 +153,103 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
 
-  <div id="log"></div>
+  <div id="log" class="rf-log"></div>
 
+  <script src="assets/js/main.js"></script>
   <script>
     (function () {
       const LS_KEY = 'passkey_auto_run_silent_get';
+      const $ = RFTest.$;
+      const safeStringify = RFTest.safeStringify;
+      const log = RFTest.createLogger($('#log'));
 
-      const panel = document.getElementById('controlsPanel');
-      const toggleBtn = document.getElementById('panelToggle');
-      const panelStatus = document.getElementById('panelStatus');
-      const logEl = document.getElementById('log');
+      const statusEls = {
+        silentGet: $('#silentGetStatus'),
+        gestureGet: $('#gestureGetStatus'),
+        silentCreate: $('#silentCreateStatus'),
+        gestureCreate: $('#gestureCreateStatus')
+      };
 
-      const originEl = document.getElementById('origin');
-      const uaEl = document.getElementById('ua');
-      const webauthnSupportEl = document.getElementById('webauthnSupport');
-      const loadedAtEl = document.getElementById('loadedAt');
-      const overallStatusEl = document.getElementById('overallStatus');
+      const outputEls = {
+        silentGet: $('#silentGetOutput'),
+        gestureGet: $('#gestureGetOutput'),
+        silentCreate: $('#silentCreateOutput'),
+        gestureCreate: $('#gestureCreateOutput')
+      };
 
-      const silentGetStatusEl = document.getElementById('silentGetStatus');
-      const gestureGetStatusEl = document.getElementById('gestureGetStatus');
-      const silentCreateStatusEl = document.getElementById('silentCreateStatus');
-      const gestureCreateStatusEl = document.getElementById('gestureCreateStatus');
-
-      const silentGetOutputEl = document.getElementById('silentGetOutput');
-      const gestureGetOutputEl = document.getElementById('gestureGetOutput');
-      const silentCreateOutputEl = document.getElementById('silentCreateOutput');
-      const gestureCreateOutputEl = document.getElementById('gestureCreateOutput');
-
-      const autoRunSilentGetEl = document.getElementById('autoRunSilentGet');
-      const manualNotesEl = document.getElementById('manualNotes');
-
-      function log(msg, tag = 'INFO') {
-        const time = new Date().toLocaleTimeString();
-        const line = document.createElement('div');
-        line.className = 'log-line';
-        line.textContent = `[${time}] ${tag}: ${msg}`;
-        logEl.appendChild(line);
-        logEl.scrollTop = logEl.scrollHeight;
+      function updateOverall(type, text) {
+        RFTest.setStatus($('#overallStatus'), type, text);
       }
 
-      function setPanelStatus(s) {
-        panelStatus.textContent = s;
+      function setPanelStatus(text) {
+        RFTest.setPanelStatus(text, $('#panelStatus'));
       }
 
-      function togglePanel() {
-        const hidden = panel.classList.toggle('hidden-global');
-        toggleBtn.setAttribute('aria-pressed', String(!hidden));
-        toggleBtn.title = hidden ? 'Show controls' : 'Hide controls';
-      }
-
-      function setStatus(el, type, text) {
-        el.className = 'status-pill';
-        if (type === 'good') el.classList.add('status-good');
-        else if (type === 'bad') el.classList.add('status-bad');
-        else if (type === 'warn') el.classList.add('status-warn');
-        else el.classList.add('status-idle');
-        el.textContent = text;
-      }
-
-      function updateOverallStatus(type, text) {
-        overallStatusEl.className = 'status-pill';
-        if (type === 'good') overallStatusEl.classList.add('status-good');
-        else if (type === 'bad') overallStatusEl.classList.add('status-bad');
-        else if (type === 'warn') overallStatusEl.classList.add('status-warn');
-        else overallStatusEl.classList.add('status-idle');
-        overallStatusEl.textContent = text;
-      }
-
-      function stringifyResult(obj) {
-        try {
-          return JSON.stringify(obj, null, 2);
-        } catch (e) {
-          return String(obj);
-        }
-      }
-
-      function bufferToBase64Url(buffer) {
+      function base64Url(buffer) {
         if (!buffer) return null;
         const bytes = new Uint8Array(buffer);
         let binary = '';
-        for (let i = 0; i < bytes.length; i++) {
-          binary += String.fromCharCode(bytes[i]);
-        }
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
         return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
       }
 
       function serializeCredential(cred) {
         if (!cred) return null;
-
-        const out = {
-          id: cred.id || null,
-          type: cred.type || null
-        };
-
-        if (cred.rawId) out.rawId = bufferToBase64Url(cred.rawId);
-
+        const out = { id: cred.id || null, type: cred.type || null };
+        if (cred.rawId) out.rawId = base64Url(cred.rawId);
         if (cred.response) {
           out.response = {};
-          if (cred.response.clientDataJSON) out.response.clientDataJSON = bufferToBase64Url(cred.response.clientDataJSON);
-          if (cred.response.authenticatorData) out.response.authenticatorData = bufferToBase64Url(cred.response.authenticatorData);
-          if (cred.response.signature) out.response.signature = bufferToBase64Url(cred.response.signature);
-          if (cred.response.userHandle) out.response.userHandle = bufferToBase64Url(cred.response.userHandle);
-          if (cred.response.attestationObject) out.response.attestationObject = bufferToBase64Url(cred.response.attestationObject);
+          if (cred.response.clientDataJSON) out.response.clientDataJSON = base64Url(cred.response.clientDataJSON);
+          if (cred.response.authenticatorData) out.response.authenticatorData = base64Url(cred.response.authenticatorData);
+          if (cred.response.signature) out.response.signature = base64Url(cred.response.signature);
+          if (cred.response.userHandle) out.response.userHandle = base64Url(cred.response.userHandle);
+          if (cred.response.attestationObject) out.response.attestationObject = base64Url(cred.response.attestationObject);
         }
-
         if (typeof cred.getClientExtensionResults === 'function') {
           out.clientExtensionResults = cred.getClientExtensionResults();
         }
-
         return out;
       }
 
       function randomBytes(length) {
+        if (!window.crypto || !crypto.getRandomValues) {
+          throw new Error('crypto.getRandomValues is unavailable');
+        }
         const arr = new Uint8Array(length);
         crypto.getRandomValues(arr);
         return arr;
       }
 
+      function preflight() {
+        if (!window.isSecureContext) return { ok: false, reason: 'WebAuthn requires a secure context. Use HTTPS or localhost.' };
+        if (!navigator.credentials) return { ok: false, reason: 'navigator.credentials is unavailable.' };
+        if (!('PublicKeyCredential' in window)) return { ok: false, reason: 'PublicKeyCredential is unavailable.' };
+        if (!window.crypto || !crypto.getRandomValues) return { ok: false, reason: 'crypto.getRandomValues is unavailable.' };
+        return { ok: true };
+      }
+
       function getOptions() {
-        return {
-          publicKey: {
-            challenge: randomBytes(32),
-            timeout: 60000,
-            userVerification: 'required',
-            rpId: window.location.hostname
-          }
+        const publicKey = {
+          challenge: randomBytes(32),
+          timeout: 60000,
+          userVerification: 'required'
         };
+        if (window.location.hostname) publicKey.rpId = window.location.hostname;
+        return { publicKey };
       }
 
       function createOptions() {
+        const rp = { name: 'RF Test Site Passkey Test' };
+        if (window.location.hostname) rp.id = window.location.hostname;
         return {
           publicKey: {
             challenge: randomBytes(32),
-            rp: {
-              name: 'RF Test Site Passkey Test',
-              id: window.location.hostname
-            },
+            rp,
             user: {
               id: randomBytes(16),
-              name: 'security-test@' + window.location.hostname,
+              name: 'security-test@' + (window.location.hostname || 'local-test'),
               displayName: 'Security Test User'
             },
             pubKeyCredParams: [
@@ -546,131 +266,54 @@
         };
       }
 
-      async function runSilentGet() {
-        log('Silent Get started');
+      async function runPasskeyTest(config) {
+        const check = preflight();
+        const statusEl = statusEls[config.key];
+        const outputEl = outputEls[config.key];
+        log(config.label + ' started');
         setPanelStatus('running');
-        setStatus(silentGetStatusEl, 'warn', 'Running...');
-        silentGetOutputEl.textContent = 'Running Silent Get...';
+        RFTest.setStatus(statusEl, 'warn', 'Running...');
+        outputEl.textContent = 'Running ' + config.label + '...';
+
+        if (!check.ok) {
+          const result = { name: 'EnvironmentUnavailable', message: check.reason };
+          outputEl.textContent = safeStringify(result);
+          RFTest.setStatus(statusEl, 'warn', 'Environment unavailable');
+          updateOverall('warn', 'Environment unavailable');
+          log(config.label + ' skipped: ' + check.reason, 'WARN');
+          setPanelStatus('ready');
+          return;
+        }
 
         try {
-          const cred = await navigator.credentials.get(getOptions());
+          const cred = config.action === 'create'
+            ? await navigator.credentials.create(createOptions())
+            : await navigator.credentials.get(getOptions());
           const result = serializeCredential(cred);
-          silentGetOutputEl.textContent = stringifyResult(result);
+          outputEl.textContent = safeStringify(result);
+          log(config.label + ' returned a credential', 'RESULT');
 
-          log('Silent Get returned a credential', 'RESULT');
-          setStatus(silentGetStatusEl, 'bad', 'Credential returned');
-          updateOverallStatus('bad', 'Potential vulnerability detected');
-        } catch (err) {
-          const errorInfo = {
-            name: err?.name || 'UnknownError',
-            message: err?.message || String(err)
-          };
-
-          silentGetOutputEl.textContent = stringifyResult(errorInfo);
-          log('Silent Get failed: ' + stringifyResult(errorInfo), 'RESULT');
-
-          if (errorInfo.name === 'NotAllowedError') {
-            setStatus(silentGetStatusEl, 'good', 'Blocked / NotAllowedError');
-            updateOverallStatus('good', 'Silent execution appears blocked');
+          if (config.expectedSilentBlock) {
+            RFTest.setStatus(statusEl, 'bad', config.action === 'create' ? 'Credential created' : 'Credential returned');
+            updateOverall('bad', config.action === 'create' ? 'Potential silent credential creation detected' : 'Potential vulnerability detected');
           } else {
-            setStatus(silentGetStatusEl, 'warn', 'Failed with ' + errorInfo.name);
-            updateOverallStatus('warn', 'Review required');
+            RFTest.setStatus(statusEl, 'good', config.action === 'create' ? 'Credential created' : 'Credential returned');
+            updateOverall('warn', 'Verify visible system UI appeared');
+          }
+        } catch (err) {
+          const errorInfo = { name: err?.name || 'UnknownError', message: err?.message || String(err) };
+          outputEl.textContent = safeStringify(errorInfo);
+          log(config.label + ' failed: ' + safeStringify(errorInfo), 'RESULT');
+
+          if (config.expectedSilentBlock && errorInfo.name === 'NotAllowedError') {
+            RFTest.setStatus(statusEl, 'good', 'Blocked / NotAllowedError');
+            updateOverall('good', config.action === 'create' ? 'Silent create appears blocked' : 'Silent execution appears blocked');
+          } else {
+            RFTest.setStatus(statusEl, 'warn', 'Failed with ' + errorInfo.name);
+            updateOverall('warn', config.expectedSilentBlock ? 'Review required' : 'Gesture flow failed or was blocked');
           }
         } finally {
-          setPanelStatus('idle');
-        }
-      }
-
-      async function runGestureGet() {
-        log('Gesture Get started');
-        setPanelStatus('running');
-        setStatus(gestureGetStatusEl, 'warn', 'Running...');
-        gestureGetOutputEl.textContent = 'Running Gesture Get...';
-
-        try {
-          const cred = await navigator.credentials.get(getOptions());
-          const result = serializeCredential(cred);
-          gestureGetOutputEl.textContent = stringifyResult(result);
-
-          log('Gesture Get returned a credential', 'RESULT');
-          setStatus(gestureGetStatusEl, 'good', 'Credential returned');
-          updateOverallStatus('warn', 'Verify visible system UI appeared');
-        } catch (err) {
-          const errorInfo = {
-            name: err?.name || 'UnknownError',
-            message: err?.message || String(err)
-          };
-
-          gestureGetOutputEl.textContent = stringifyResult(errorInfo);
-          log('Gesture Get failed: ' + stringifyResult(errorInfo), 'RESULT');
-          setStatus(gestureGetStatusEl, 'warn', 'Failed with ' + errorInfo.name);
-          updateOverallStatus('warn', 'Gesture flow failed or was blocked');
-        } finally {
-          setPanelStatus('idle');
-        }
-      }
-
-      async function runSilentCreate() {
-        log('Silent Create started');
-        setPanelStatus('running');
-        setStatus(silentCreateStatusEl, 'warn', 'Running...');
-        silentCreateOutputEl.textContent = 'Running Silent Create...';
-
-        try {
-          const cred = await navigator.credentials.create(createOptions());
-          const result = serializeCredential(cred);
-          silentCreateOutputEl.textContent = stringifyResult(result);
-
-          log('Silent Create returned a credential', 'RESULT');
-          setStatus(silentCreateStatusEl, 'bad', 'Credential created');
-          updateOverallStatus('bad', 'Potential silent credential creation detected');
-        } catch (err) {
-          const errorInfo = {
-            name: err?.name || 'UnknownError',
-            message: err?.message || String(err)
-          };
-
-          silentCreateOutputEl.textContent = stringifyResult(errorInfo);
-          log('Silent Create failed: ' + stringifyResult(errorInfo), 'RESULT');
-
-          if (errorInfo.name === 'NotAllowedError') {
-            setStatus(silentCreateStatusEl, 'good', 'Blocked / NotAllowedError');
-            updateOverallStatus('good', 'Silent create appears blocked');
-          } else {
-            setStatus(silentCreateStatusEl, 'warn', 'Failed with ' + errorInfo.name);
-            updateOverallStatus('warn', 'Review required');
-          }
-        } finally {
-          setPanelStatus('idle');
-        }
-      }
-
-      async function runGestureCreate() {
-        log('Gesture Create started');
-        setPanelStatus('running');
-        setStatus(gestureCreateStatusEl, 'warn', 'Running...');
-        gestureCreateOutputEl.textContent = 'Running Gesture Create...';
-
-        try {
-          const cred = await navigator.credentials.create(createOptions());
-          const result = serializeCredential(cred);
-          gestureCreateOutputEl.textContent = stringifyResult(result);
-
-          log('Gesture Create returned a credential', 'RESULT');
-          setStatus(gestureCreateStatusEl, 'good', 'Credential created');
-          updateOverallStatus('warn', 'Verify visible system UI appeared');
-        } catch (err) {
-          const errorInfo = {
-            name: err?.name || 'UnknownError',
-            message: err?.message || String(err)
-          };
-
-          gestureCreateOutputEl.textContent = stringifyResult(errorInfo);
-          log('Gesture Create failed: ' + stringifyResult(errorInfo), 'RESULT');
-          setStatus(gestureCreateStatusEl, 'warn', 'Failed with ' + errorInfo.name);
-          updateOverallStatus('warn', 'Gesture create failed or was blocked');
-        } finally {
-          setPanelStatus('idle');
+          setPanelStatus('ready');
         }
       }
 
@@ -678,104 +321,90 @@
         return [
           '=== PASSKEY TEST SUMMARY ===',
           'Origin: ' + window.location.origin,
+          'Secure Context: ' + window.isSecureContext,
           'Loaded At: ' + new Date().toISOString(),
           '',
-          'Silent Get Status: ' + silentGetStatusEl.textContent,
-          silentGetOutputEl.textContent,
+          'Silent Get Status: ' + statusEls.silentGet.textContent,
+          outputEls.silentGet.textContent,
           '',
-          'Gesture Get Status: ' + gestureGetStatusEl.textContent,
-          gestureGetOutputEl.textContent,
+          'Gesture Get Status: ' + statusEls.gestureGet.textContent,
+          outputEls.gestureGet.textContent,
           '',
-          'Silent Create Status: ' + silentCreateStatusEl.textContent,
-          silentCreateOutputEl.textContent,
+          'Silent Create Status: ' + statusEls.silentCreate.textContent,
+          outputEls.silentCreate.textContent,
           '',
-          'Gesture Create Status: ' + gestureCreateStatusEl.textContent,
-          gestureCreateOutputEl.textContent,
+          'Gesture Create Status: ' + statusEls.gestureCreate.textContent,
+          outputEls.gestureCreate.textContent,
           '',
           'Manual Notes:',
-          manualNotesEl.value || '(empty)',
+          $('#manualNotes').value || '(empty)',
           '',
           'Execution Log:',
-          logEl.innerText
+          $('#log').innerText
         ].join('\n');
       }
 
-      toggleBtn.addEventListener('click', togglePanel);
+      RFTest.initPanelToggle();
+      $('#origin').textContent = window.location.origin;
+      $('#ua').textContent = navigator.userAgent;
+      $('#loadedAt').textContent = new Date().toLocaleString();
+      $('#secureContext').textContent = window.isSecureContext ? 'Yes' : 'No';
+      $('#webauthnSupport').textContent = ('PublicKeyCredential' in window) ? 'Yes' : 'No';
 
-      originEl.textContent = window.location.origin;
-      uaEl.textContent = navigator.userAgent;
-      loadedAtEl.textContent = new Date().toLocaleString();
-      webauthnSupportEl.textContent = ('PublicKeyCredential' in window) ? 'Yes' : 'No';
+      const check = preflight();
+      if (!check.ok) {
+        log(check.reason, 'WARN');
+        updateOverall('warn', 'Environment unavailable');
+      }
 
-      autoRunSilentGetEl.checked = localStorage.getItem(LS_KEY) === 'true';
-      autoRunSilentGetEl.addEventListener('change', () => {
-        localStorage.setItem(LS_KEY, autoRunSilentGetEl.checked ? 'true' : 'false');
-        log('Auto-run Silent Get set to: ' + autoRunSilentGetEl.checked);
-      });
+      try {
+        $('#autoRunSilentGet').checked = localStorage.getItem(LS_KEY) === 'true';
+      } catch (err) {
+        log('Could not read auto-run setting: ' + err.message, 'WARN');
+      }
 
-      document.getElementById('runSilentGetBtn').addEventListener('click', runSilentGet);
-      document.getElementById('runGestureGetBtn').addEventListener('click', runGestureGet);
-      document.getElementById('runSilentCreateBtn').addEventListener('click', runSilentCreate);
-      document.getElementById('runGestureCreateBtn').addEventListener('click', runGestureCreate);
-
-      document.getElementById('copyNotesBtn').addEventListener('click', async () => {
+      $('#autoRunSilentGet').addEventListener('change', () => {
         try {
-          await navigator.clipboard.writeText(manualNotesEl.value);
-          log('Manual notes copied');
-        } catch (e) {
-          log('Failed to copy manual notes: ' + (e?.message || e), 'ERROR');
+          localStorage.setItem(LS_KEY, $('#autoRunSilentGet').checked ? 'true' : 'false');
+          log('Auto-run Silent Get set to: ' + $('#autoRunSilentGet').checked);
+        } catch (err) {
+          log('Could not save auto-run setting: ' + err.message, 'WARN');
         }
       });
 
-      document.getElementById('copySummaryBtn').addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(buildSummaryText());
-          log('Test summary copied');
-        } catch (e) {
-          log('Failed to copy test summary: ' + (e?.message || e), 'ERROR');
-        }
-      });
+      $('#runSilentGetBtn').addEventListener('click', () => runPasskeyTest({ key: 'silentGet', label: 'Silent Get', action: 'get', expectedSilentBlock: true }));
+      $('#runGestureGetBtn').addEventListener('click', () => runPasskeyTest({ key: 'gestureGet', label: 'Gesture Get', action: 'get', expectedSilentBlock: false }));
+      $('#runSilentCreateBtn').addEventListener('click', () => runPasskeyTest({ key: 'silentCreate', label: 'Silent Create', action: 'create', expectedSilentBlock: true }));
+      $('#runGestureCreateBtn').addEventListener('click', () => runPasskeyTest({ key: 'gestureCreate', label: 'Gesture Create', action: 'create', expectedSilentBlock: false }));
 
-      document.getElementById('copyFullLogBtn').addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(buildSummaryText());
-          log('Full log copied');
-        } catch (e) {
-          log('Failed to copy full log: ' + (e?.message || e), 'ERROR');
-        }
-      });
+      $('#copyNotesBtn').addEventListener('click', () => RFTest.copyText($('#manualNotes').value, { log, label: 'Manual notes', fallbackHost: $('#notesCard') }));
+      $('#copySummaryBtn').addEventListener('click', () => RFTest.copyText(buildSummaryText(), { log, label: 'Test summary', fallbackHost: $('#notesCard') }));
+      $('#copyFullLogBtn').addEventListener('click', () => RFTest.copyText(buildSummaryText(), { log, label: 'Full log', fallbackHost: $('#controlsPanel') }));
 
-      document.getElementById('clearLogBtn').addEventListener('click', () => {
-        logEl.innerHTML = '';
-        silentGetOutputEl.textContent = 'No output yet.';
-        gestureGetOutputEl.textContent = 'No output yet.';
-        silentCreateOutputEl.textContent = 'No output yet.';
-        gestureCreateOutputEl.textContent = 'No output yet.';
-
-        setStatus(silentGetStatusEl, 'idle', 'Not run');
-        setStatus(gestureGetStatusEl, 'idle', 'Not run');
-        setStatus(silentCreateStatusEl, 'idle', 'Not run');
-        setStatus(gestureCreateStatusEl, 'idle', 'Not run');
-        updateOverallStatus('idle', 'Idle');
+      $('#clearLogBtn').addEventListener('click', () => {
+        $('#log').innerHTML = '';
+        Object.values(outputEls).forEach((el) => { el.textContent = 'No output yet.'; });
+        Object.values(statusEls).forEach((el) => RFTest.setStatus(el, 'idle', 'Not run'));
+        updateOverall('idle', 'Idle');
       });
 
       log('Passkey page ready');
       setPanelStatus('ready');
 
-      if (!('PublicKeyCredential' in window)) {
-        log('PublicKeyCredential is not available in this environment', 'WARN');
-        updateOverallStatus('warn', 'WebAuthn not supported');
-      }
-
       window.addEventListener('load', async () => {
-        if (localStorage.getItem(LS_KEY) === 'true' && 'PublicKeyCredential' in window) {
+        let shouldAutoRun = false;
+        try {
+          shouldAutoRun = localStorage.getItem(LS_KEY) === 'true';
+        } catch (err) {
+          log('Could not read auto-run setting on load: ' + err.message, 'WARN');
+        }
+        if (shouldAutoRun) {
           log('Auto-run Silent Get triggered');
-          await runSilentGet();
+          await runPasskeyTest({ key: 'silentGet', label: 'Silent Get', action: 'get', expectedSilentBlock: true });
         }
       });
     })();
   </script>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
