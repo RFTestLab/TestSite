@@ -1,798 +1,781 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Passkey Security Test Page</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Passkey Security Tests</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    :root { --brand-green: #00A859; }
 
     body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #0f1115;
-      color: #f5f7fa;
-      line-height: 1.5;
+      background: #f7fbf7;
+      padding-bottom: 260px;
     }
 
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px;
+    .home-btn {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1300;
     }
 
-    h1, h2, h3 {
-      margin-top: 0;
+    #panelToggle {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 1300;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      background: var(--brand-green);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,.15);
+      cursor: pointer;
     }
 
-    h1 {
-      font-size: 32px;
+    #panelToggle:active {
+      transform: translateY(1px);
+    }
+
+    .controls {
+      position: fixed;
+      right: 12px;
+      top: 64px;
+      width: min(420px, 92vw);
+      max-height: 72vh;
+      overflow: auto;
+      background: #fff;
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+      z-index: 1200;
+      transition: transform .25s ease;
+    }
+
+    .controls.hidden-global {
+      transform: translateX(calc(100% + 24px));
+    }
+
+    .controls-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 8px;
     }
 
-    .subtitle {
-      color: #b7c0cc;
-      margin-bottom: 24px;
+    @media (max-width: 767.98px) {
+      .controls {
+        left: 12px;
+        right: 12px;
+        width: auto;
+        top: auto;
+        bottom: 64px;
+        max-height: 55vh;
+        border-radius: 12px;
+        transform: translateY(0);
+      }
+
+      .controls.hidden-global {
+        transform: translateY(calc(100% + 24px));
+      }
     }
 
-    .card {
-      background: #171a21;
-      border: 1px solid #2b3240;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-    }
-
-    button {
-      appearance: none;
-      border: none;
-      border-radius: 10px;
-      padding: 12px 16px;
-      margin: 6px 8px 6px 0;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.08s ease, opacity 0.2s ease;
-    }
-
-    button:hover {
-      opacity: 0.92;
-    }
-
-    button:active {
-      transform: scale(0.98);
-    }
-
-    .btn-primary {
-      background: #2d7ef7;
-      color: #fff;
-    }
-
-    .btn-warning {
-      background: #f7b500;
-      color: #111;
-    }
-
-    .btn-danger {
-      background: #e24b4b;
-      color: #fff;
-    }
-
-    .btn-secondary {
-      background: #303744;
-      color: #fff;
-    }
-
-    .status {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .status-idle {
-      background: #303744;
-      color: #d8e0ea;
-    }
-
-    .status-good {
-      background: #1f7a4d;
-      color: #eafff3;
-    }
-
-    .status-bad {
-      background: #8f2d2d;
-      color: #fff2f2;
-    }
-
-    .status-warn {
-      background: #8a6a10;
-      color: #fff9e8;
-    }
-
-    .small {
-      font-size: 13px;
-      color: #b7c0cc;
-    }
-
-    .mono {
-      font-family: Consolas, Monaco, monospace;
-      word-break: break-word;
-    }
-
-    pre {
-      background: #0b0d12;
-      border: 1px solid #242a36;
-      border-radius: 10px;
-      padding: 14px;
-      overflow: auto;
-      color: #d6e2ff;
-      white-space: pre-wrap;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 130px;
-      resize: vertical;
-      border: 1px solid #2b3240;
-      background: #0b0d12;
-      color: #f5f7fa;
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 14px;
-    }
-
-    ul {
-      padding-left: 18px;
-    }
-
-    code {
-      background: #0b0d12;
-      padding: 2px 6px;
-      border-radius: 6px;
-      color: #d6e2ff;
-    }
-
-    .top-actions {
-      margin-top: 14px;
+    .test-card {
+      background: #fff;
+      border: 1px solid #e6efe8;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      height: 100%;
     }
 
     .result-box {
-      margin-top: 12px;
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      word-break: break-word;
+    }
+
+    .muted-small {
+      font-size: .85rem;
+      color: #6b7280;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 600;
+      background: #eef2f7;
+      color: #334155;
+    }
+
+    .status-idle {
+      background: #eef2f7;
+      color: #334155;
+    }
+
+    .status-good {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-bad {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    pre.output {
+      min-height: 170px;
+      max-height: 320px;
+      overflow: auto;
+      background: #0b1220;
+      color: #dbeafe;
       padding: 12px;
       border-radius: 10px;
-      background: #0b0d12;
-      border: 1px solid #242a36;
+      font-family: monospace;
+      font-size: 13px;
+      margin-top: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
-    .danger-text {
-      color: #ff8f8f;
+    textarea.form-control {
+      min-height: 140px;
+    }
+
+    #log {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 240px;
+      background: #0b1220;
+      color: #dbeafe;
+      padding: 12px;
+      overflow: auto;
+      font-family: monospace;
+      font-size: 13px;
+      z-index: 1100;
+    }
+
+    .log-line {
+      margin-bottom: 6px;
+    }
+
+    .btn-brand {
+      background: var(--brand-green);
+      color: #fff;
+      border: none;
+    }
+
+    .btn-brand:hover,
+    .btn-brand:focus {
+      background: #008d4c;
+      color: #fff;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
       font-weight: 700;
+      margin-bottom: 8px;
     }
 
-    .good-text {
-      color: #7ff0a8;
-      font-weight: 700;
-    }
-
-    .warn-text {
-      color: #ffd76a;
-      font-weight: 700;
-    }
-
-    .footer-note {
-      color: #95a2b3;
-      font-size: 12px;
-      margin-top: 10px;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      margin: 2px 6px 2px 0;
-      border-radius: 999px;
-      background: #222938;
-      color: #d6deea;
-      font-size: 12px;
-      font-weight: 700;
+    .list-tight {
+      padding-left: 18px;
+      margin-bottom: 0;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Passkey Security Test Page</h1>
-    <p class="subtitle">
-      Android / browser / passkey behavior validation page for manual security testing.
-    </p>
+  <a class="btn btn-sm btn-outline-secondary home-btn" href="index.html">Home</a>
 
-    <div class="card">
-      <h2>Test Goal</h2>
-      <p class="small">
-        Ova stranica služi da proveriš da li <code>navigator.credentials.get()</code> i
-        <code>navigator.credentials.create()</code> mogu da se izvrše:
-      </p>
-      <ul class="small">
-        <li>bez korisničke interakcije</li>
-        <li>bez biometric / PIN prompta</li>
-        <li>na način koji deluje tiho ili automatski</li>
+  <button id="panelToggle" title="Toggle control panel">☰</button>
+
+  <div class="controls" id="controlsPanel">
+    <div class="controls-header">
+      <h6 class="mb-0">Passkey controls & logging</h6>
+      <span class="badge text-bg-light" id="panelStatus">idle</span>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Auto-run options</label>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="autoRunSilentGet">
+        <label class="form-check-label" for="autoRunSilentGet">
+          Auto-run Silent Get on page load
+        </label>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Expected safe behavior</label>
+      <ul class="muted-small list-tight">
+        <li>Silent tests should fail or require explicit system UI.</li>
+        <li>Gesture tests should run only after click and show passkey / biometric flow.</li>
+        <li>No credential should be returned silently.</li>
       </ul>
-
-      <div class="top-actions">
-        <span class="badge">Silent Get</span>
-        <span class="badge">Gesture Get</span>
-        <span class="badge">Silent Create</span>
-        <span class="badge">Gesture Create</span>
-      </div>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <h2>Environment</h2>
-        <div class="result-box">
-          <div><strong>Origin:</strong> <span id="origin" class="mono"></span></div>
-          <div><strong>User agent:</strong> <span id="ua" class="mono"></span></div>
-          <div><strong>Has PublicKeyCredential:</strong> <span id="webauthnSupport"></span></div>
-          <div><strong>Page loaded at:</strong> <span id="loadedAt"></span></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Current Overall Status</h2>
-        <div id="overallStatus" class="status status-idle">Idle</div>
-        <div class="small">
-          Safe behavior usually means:
-          <ul>
-            <li><span class="good-text">silent tests fail</span></li>
-            <li><span class="good-text">gesture tests require user action and system prompt</span></li>
-          </ul>
-        </div>
-      </div>
+    <div class="mb-3 d-flex gap-2 flex-wrap">
+      <button id="copyFullLogBtn" class="btn btn-sm btn-outline-secondary">Copy full log</button>
+      <button id="clearLogBtn" class="btn btn-sm btn-warning">Clear log</button>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <h2>1) Silent Get Test</h2>
-        <p class="small">
-          Pokreće <code>navigator.credentials.get()</code> bez klika. Ovo simulira scenario sličan XSS triggeru.
-        </p>
+    <div class="muted-small">
+      Use this page to validate Android browser / app passkey behavior against silent get/create scenarios.
+    </div>
+  </div>
 
-        <div id="silentGetStatus" class="status status-idle">Not run</div>
+  <div class="container pt-5">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="test-card">
+          <h1 class="mb-2">Passkey Security Tests</h1>
+          <p class="lead text-muted mb-3">
+            Manual validation page for silent passkey get/create behavior and user-gesture enforcement.
+          </p>
 
-        <button class="btn-warning" id="runSilentGetBtn">Run Silent Get</button>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="result-box">
+                <div><strong>Origin:</strong> <span id="origin" class="mono"></span></div>
+                <div><strong>Has WebAuthn:</strong> <span id="webauthnSupport"></span></div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="result-box">
+                <div><strong>Page loaded:</strong> <span id="loadedAt"></span></div>
+                <div><strong>Overall status:</strong> <span id="overallStatus" class="status-pill status-idle">Idle</span></div>
+              </div>
+            </div>
+          </div>
 
-        <div class="result-box">
-          <strong>Expected safe result:</strong>
-          <div class="small">Operation should fail, or require visible system interaction.</div>
-        </div>
-
-        <div class="result-box">
-          <strong>Vulnerable sign:</strong>
-          <div class="small danger-text">
-            Credential returned without explicit user action.
+          <div class="result-box mt-3">
+            <strong>User agent:</strong>
+            <div id="ua" class="mono muted-small mt-1"></div>
           </div>
         </div>
-
-        <pre id="silentGetOutput">No output yet.</pre>
-      </div>
-
-      <div class="card">
-        <h2>2) Gesture Get Test</h2>
-        <p class="small">
-          Pokreće <code>navigator.credentials.get()</code> preko klika na dugme.
-        </p>
-
-        <div id="gestureGetStatus" class="status status-idle">Not run</div>
-
-        <button class="btn-primary" id="runGestureGetBtn">Run Gesture Get</button>
-
-        <div class="result-box">
-          <strong>Expected safe result:</strong>
-          <div class="small">
-            System prompt / biometric / PIN should appear before credential is returned.
-          </div>
-        </div>
-
-        <pre id="gestureGetOutput">No output yet.</pre>
       </div>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <h2>3) Silent Create Test</h2>
-        <p class="small">
-          Pokreće <code>navigator.credentials.create()</code> bez user gesture.
-        </p>
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="test-card">
+          <div class="section-title">1) Silent Get Test</div>
+          <p class="muted-small">
+            Calls <code>navigator.credentials.get()</code> without click. This is the closest simple simulation of a script-driven trigger.
+          </p>
 
-        <div id="silentCreateStatus" class="status status-idle">Not run</div>
-
-        <button class="btn-warning" id="runSilentCreateBtn">Run Silent Create</button>
-
-        <div class="result-box">
-          <strong>Expected safe result:</strong>
-          <div class="small">Should fail or require explicit system-confirmed user action.</div>
-        </div>
-
-        <div class="result-box">
-          <strong>Vulnerable sign:</strong>
-          <div class="small danger-text">
-            New credential gets created silently or with no meaningful user confirmation.
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+            <button class="btn btn-sm btn-brand" id="runSilentGetBtn">Run Silent Get</button>
+            <span id="silentGetStatus" class="status-pill status-idle">Not run</span>
           </div>
-        </div>
 
-        <pre id="silentCreateOutput">No output yet.</pre>
+          <div class="result-box">
+            <strong>Expected safe result:</strong>
+            <div class="muted-small">Blocked, canceled, or gated behind explicit user/system interaction.</div>
+          </div>
+
+          <pre id="silentGetOutput" class="output">No output yet.</pre>
+        </div>
       </div>
 
-      <div class="card">
-        <h2>4) Gesture Create Test</h2>
-        <p class="small">
-          Pokreće <code>navigator.credentials.create()</code> preko klika.
-        </p>
+      <div class="col-lg-6">
+        <div class="test-card">
+          <div class="section-title">2) Gesture Get Test</div>
+          <p class="muted-small">
+            Calls <code>navigator.credentials.get()</code> from a user click.
+          </p>
 
-        <div id="gestureCreateStatus" class="status status-idle">Not run</div>
-
-        <button class="btn-primary" id="runGestureCreateBtn">Run Gesture Create</button>
-
-        <div class="result-box">
-          <strong>Expected safe result:</strong>
-          <div class="small">
-            Visible system UI and explicit confirmation path before credential creation.
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+            <button class="btn btn-sm btn-brand" id="runGestureGetBtn">Run Gesture Get</button>
+            <span id="gestureGetStatus" class="status-pill status-idle">Not run</span>
           </div>
-        </div>
 
-        <pre id="gestureCreateOutput">No output yet.</pre>
+          <div class="result-box">
+            <strong>Expected safe result:</strong>
+            <div class="muted-small">Credential flow appears only after click, with visible system passkey UI.</div>
+          </div>
+
+          <pre id="gestureGetOutput" class="output">No output yet.</pre>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="test-card">
+          <div class="section-title">3) Silent Create Test</div>
+          <p class="muted-small">
+            Calls <code>navigator.credentials.create()</code> without click.
+          </p>
+
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+            <button class="btn btn-sm btn-brand" id="runSilentCreateBtn">Run Silent Create</button>
+            <span id="silentCreateStatus" class="status-pill status-idle">Not run</span>
+          </div>
+
+          <div class="result-box">
+            <strong>Expected safe result:</strong>
+            <div class="muted-small">Blocked, canceled, or requiring explicit confirmation and system UI.</div>
+          </div>
+
+          <pre id="silentCreateOutput" class="output">No output yet.</pre>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="test-card">
+          <div class="section-title">4) Gesture Create Test</div>
+          <p class="muted-small">
+            Calls <code>navigator.credentials.create()</code> from a user click.
+          </p>
+
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+            <button class="btn btn-sm btn-brand" id="runGestureCreateBtn">Run Gesture Create</button>
+            <span id="gestureCreateStatus" class="status-pill status-idle">Not run</span>
+          </div>
+
+          <div class="result-box">
+            <strong>Expected safe result:</strong>
+            <div class="muted-small">Credential creation only after user action and visible platform confirmation.</div>
+          </div>
+
+          <pre id="gestureCreateOutput" class="output">No output yet.</pre>
+        </div>
       </div>
     </div>
 
-    <div class="card">
-      <h2>Optional Auto Test on Page Load</h2>
-      <p class="small">
-        Ako hoćeš da se <strong>Silent Get</strong> pokrene automatski pri otvaranju stranice, uključi checkbox pa refresh.
-      </p>
-      <label class="small">
-        <input type="checkbox" id="autoRunSilentGet" />
-        Auto-run Silent Get on page load
-      </label>
-    </div>
+    <div class="row g-4 mt-1">
+      <div class="col-12">
+        <div class="test-card">
+          <div class="section-title">Manual Notes</div>
+          <p class="muted-small">
+            Note whether biometric prompt appeared, which handler opened, whether anything happened silently, and what Android / browser / app combination you used.
+          </p>
 
-    <div class="card">
-      <h2>Manual Observations</h2>
-      <p class="small">
-        Ovde upiši šta si video na telefonu:
-      </p>
-      <textarea id="manualNotes" placeholder="Example:
-- Did biometric prompt appear?
-- Did anything happen silently?
-- Was there a system passkey picker?
-- Which app/browser handled the flow?
-- Did it return immediately?
+          <textarea id="manualNotes" class="form-control" placeholder="Example:
+- Device:
+- Android version:
+- Browser:
+- RoboForm build:
+- Silent Get result:
+- Gesture Get result:
+- Silent Create result:
+- Gesture Create result:
+- Did biometric / passkey picker appear?
 "></textarea>
 
-      <div class="top-actions">
-        <button class="btn-secondary" id="copyNotesBtn">Copy Notes</button>
-        <button class="btn-secondary" id="copyFullLogBtn">Copy Full Log</button>
-        <button class="btn-danger" id="clearLogBtn">Clear Log</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Execution Log</h2>
-      <pre id="executionLog">Execution log is empty.</pre>
-      <div class="footer-note">
-        Ovde vidiš redom šta je pokrenuto, koji je rezultat, i da li je došlo do exception-a.
+          <div class="mt-3 d-flex gap-2 flex-wrap">
+            <button id="copyNotesBtn" class="btn btn-sm btn-outline-secondary">Copy notes</button>
+            <button id="copySummaryBtn" class="btn btn-sm btn-outline-secondary">Copy test summary</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+  <div id="log"></div>
+
   <script>
-    const originEl = document.getElementById("origin");
-    const uaEl = document.getElementById("ua");
-    const webauthnSupportEl = document.getElementById("webauthnSupport");
-    const loadedAtEl = document.getElementById("loadedAt");
-    const overallStatusEl = document.getElementById("overallStatus");
-    const executionLogEl = document.getElementById("executionLog");
+    (function () {
+      const LS_KEY = 'passkey_auto_run_silent_get';
 
-    const silentGetStatusEl = document.getElementById("silentGetStatus");
-    const gestureGetStatusEl = document.getElementById("gestureGetStatus");
-    const silentCreateStatusEl = document.getElementById("silentCreateStatus");
-    const gestureCreateStatusEl = document.getElementById("gestureCreateStatus");
+      const panel = document.getElementById('controlsPanel');
+      const toggleBtn = document.getElementById('panelToggle');
+      const panelStatus = document.getElementById('panelStatus');
+      const logEl = document.getElementById('log');
 
-    const silentGetOutputEl = document.getElementById("silentGetOutput");
-    const gestureGetOutputEl = document.getElementById("gestureGetOutput");
-    const silentCreateOutputEl = document.getElementById("silentCreateOutput");
-    const gestureCreateOutputEl = document.getElementById("gestureCreateOutput");
+      const originEl = document.getElementById('origin');
+      const uaEl = document.getElementById('ua');
+      const webauthnSupportEl = document.getElementById('webauthnSupport');
+      const loadedAtEl = document.getElementById('loadedAt');
+      const overallStatusEl = document.getElementById('overallStatus');
 
-    const autoRunSilentGetEl = document.getElementById("autoRunSilentGet");
-    const manualNotesEl = document.getElementById("manualNotes");
+      const silentGetStatusEl = document.getElementById('silentGetStatus');
+      const gestureGetStatusEl = document.getElementById('gestureGetStatus');
+      const silentCreateStatusEl = document.getElementById('silentCreateStatus');
+      const gestureCreateStatusEl = document.getElementById('gestureCreateStatus');
 
-    const LS_KEY = "passkey_auto_run_silent_get";
+      const silentGetOutputEl = document.getElementById('silentGetOutput');
+      const gestureGetOutputEl = document.getElementById('gestureGetOutput');
+      const silentCreateOutputEl = document.getElementById('silentCreateOutput');
+      const gestureCreateOutputEl = document.getElementById('gestureCreateOutput');
 
-    originEl.textContent = window.location.origin;
-    uaEl.textContent = navigator.userAgent;
-    loadedAtEl.textContent = new Date().toLocaleString();
-    webauthnSupportEl.textContent = ("PublicKeyCredential" in window) ? "Yes" : "No";
+      const autoRunSilentGetEl = document.getElementById('autoRunSilentGet');
+      const manualNotesEl = document.getElementById('manualNotes');
 
-    autoRunSilentGetEl.checked = localStorage.getItem(LS_KEY) === "true";
-    autoRunSilentGetEl.addEventListener("change", () => {
-      localStorage.setItem(LS_KEY, autoRunSilentGetEl.checked ? "true" : "false");
-      logLine("Auto-run Silent Get set to: " + autoRunSilentGetEl.checked);
-    });
-
-    function setStatus(el, type, text) {
-      el.className = "status";
-      if (type === "good") el.classList.add("status-good");
-      else if (type === "bad") el.classList.add("status-bad");
-      else if (type === "warn") el.classList.add("status-warn");
-      else el.classList.add("status-idle");
-      el.textContent = text;
-    }
-
-    function updateOverallStatus(type, text) {
-      setStatus(overallStatusEl, type, text);
-    }
-
-    function logLine(message) {
-      const now = new Date().toISOString();
-      const previous = executionLogEl.textContent === "Execution log is empty."
-        ? ""
-        : executionLogEl.textContent + "\n";
-      executionLogEl.textContent = previous + "[" + now + "] " + message;
-    }
-
-    function bufferToBase64Url(buffer) {
-      if (!buffer) return null;
-      const bytes = new Uint8Array(buffer);
-      let binary = "";
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-    }
-
-    function serializeCredential(cred) {
-      if (!cred) return null;
-
-      const base = {
-        id: cred.id || null,
-        type: cred.type || null
-      };
-
-      if (cred.rawId) {
-        base.rawId = bufferToBase64Url(cred.rawId);
+      function log(msg, tag = 'INFO') {
+        const time = new Date().toLocaleTimeString();
+        const line = document.createElement('div');
+        line.className = 'log-line';
+        line.textContent = `[${time}] ${tag}: ${msg}`;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
       }
 
-      if (cred.response) {
-        base.response = {};
-        if (cred.response.clientDataJSON) {
-          base.response.clientDataJSON = bufferToBase64Url(cred.response.clientDataJSON);
-        }
-        if (cred.response.authenticatorData) {
-          base.response.authenticatorData = bufferToBase64Url(cred.response.authenticatorData);
-        }
-        if (cred.response.signature) {
-          base.response.signature = bufferToBase64Url(cred.response.signature);
-        }
-        if (cred.response.userHandle) {
-          base.response.userHandle = bufferToBase64Url(cred.response.userHandle);
-        }
-        if (cred.response.attestationObject) {
-          base.response.attestationObject = bufferToBase64Url(cred.response.attestationObject);
+      function setPanelStatus(s) {
+        panelStatus.textContent = s;
+      }
+
+      function togglePanel() {
+        const hidden = panel.classList.toggle('hidden-global');
+        toggleBtn.setAttribute('aria-pressed', String(!hidden));
+        toggleBtn.title = hidden ? 'Show controls' : 'Hide controls';
+      }
+
+      function setStatus(el, type, text) {
+        el.className = 'status-pill';
+        if (type === 'good') el.classList.add('status-good');
+        else if (type === 'bad') el.classList.add('status-bad');
+        else if (type === 'warn') el.classList.add('status-warn');
+        else el.classList.add('status-idle');
+        el.textContent = text;
+      }
+
+      function updateOverallStatus(type, text) {
+        overallStatusEl.className = 'status-pill';
+        if (type === 'good') overallStatusEl.classList.add('status-good');
+        else if (type === 'bad') overallStatusEl.classList.add('status-bad');
+        else if (type === 'warn') overallStatusEl.classList.add('status-warn');
+        else overallStatusEl.classList.add('status-idle');
+        overallStatusEl.textContent = text;
+      }
+
+      function stringifyResult(obj) {
+        try {
+          return JSON.stringify(obj, null, 2);
+        } catch (e) {
+          return String(obj);
         }
       }
 
-      if (typeof cred.getClientExtensionResults === "function") {
-        base.clientExtensionResults = cred.getClientExtensionResults();
-      }
-
-      return base;
-    }
-
-    function stringifyResult(obj) {
-      try {
-        return JSON.stringify(obj, null, 2);
-      } catch (e) {
-        return String(obj);
-      }
-    }
-
-    function randomChallenge(length = 32) {
-      const arr = new Uint8Array(length);
-      crypto.getRandomValues(arr);
-      return arr;
-    }
-
-    function randomUserId(length = 16) {
-      const arr = new Uint8Array(length);
-      crypto.getRandomValues(arr);
-      return arr;
-    }
-
-    async function maybeSendResultToServer(label, payload) {
-      // OPTIONAL:
-      // If you want server-side logging, replace URL below and uncomment fetch block.
-      // Make sure your endpoint can safely receive JSON.
-
-      const ENABLE_REMOTE_LOG = false;
-      const REMOTE_URL = "https://your-server.com/log";
-
-      if (!ENABLE_REMOTE_LOG) return;
-
-      try {
-        await fetch(REMOTE_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            label,
-            timestamp: new Date().toISOString(),
-            origin: window.location.origin,
-            payload
-          })
-        });
-        logLine(label + ": result sent to remote logger.");
-      } catch (err) {
-        logLine(label + ": failed to send to remote logger: " + (err?.message || err));
-      }
-    }
-
-    function getOptions() {
-      return {
-        publicKey: {
-          challenge: randomChallenge(),
-          timeout: 60000,
-          userVerification: "required",
-          rpId: window.location.hostname
+      function bufferToBase64Url(buffer) {
+        if (!buffer) return null;
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
         }
-      };
-    }
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      }
 
-    function createOptions() {
-      return {
-        publicKey: {
-          challenge: randomChallenge(),
-          rp: {
-            name: "Passkey Security Test",
-            id: window.location.hostname
-          },
-          user: {
-            id: randomUserId(),
-            name: "security-test@" + window.location.hostname,
-            displayName: "Security Test User"
-          },
-          pubKeyCredParams: [
-            { type: "public-key", alg: -7 },
-            { type: "public-key", alg: -257 }
-          ],
-          timeout: 60000,
-          authenticatorSelection: {
-            residentKey: "preferred",
-            userVerification: "required"
-          },
-          attestation: "none"
-        }
-      };
-    }
+      function serializeCredential(cred) {
+        if (!cred) return null;
 
-    async function runSilentGet() {
-      logLine("Silent Get started.");
-      setStatus(silentGetStatusEl, "warn", "Running...");
-      silentGetOutputEl.textContent = "Running Silent Get...";
-
-      try {
-        const cred = await navigator.credentials.get(getOptions());
-        const serialized = serializeCredential(cred);
-        silentGetOutputEl.textContent = stringifyResult(serialized);
-
-        logLine("Silent Get returned a credential.");
-        setStatus(silentGetStatusEl, "bad", "Credential returned");
-        updateOverallStatus("bad", "Potential vulnerability detected");
-
-        await maybeSendResultToServer("silent-get-success", serialized);
-      } catch (err) {
-        const errorInfo = {
-          name: err?.name || "UnknownError",
-          message: err?.message || String(err)
+        const out = {
+          id: cred.id || null,
+          type: cred.type || null
         };
 
-        silentGetOutputEl.textContent = stringifyResult(errorInfo);
-        logLine("Silent Get failed: " + stringifyResult(errorInfo));
+        if (cred.rawId) out.rawId = bufferToBase64Url(cred.rawId);
 
-        if (errorInfo.name === "NotAllowedError") {
-          setStatus(silentGetStatusEl, "good", "Blocked / NotAllowedError");
-          updateOverallStatus("good", "Silent execution appears blocked");
-        } else {
-          setStatus(silentGetStatusEl, "warn", "Failed with " + errorInfo.name);
-          updateOverallStatus("warn", "Review required");
+        if (cred.response) {
+          out.response = {};
+          if (cred.response.clientDataJSON) out.response.clientDataJSON = bufferToBase64Url(cred.response.clientDataJSON);
+          if (cred.response.authenticatorData) out.response.authenticatorData = bufferToBase64Url(cred.response.authenticatorData);
+          if (cred.response.signature) out.response.signature = bufferToBase64Url(cred.response.signature);
+          if (cred.response.userHandle) out.response.userHandle = bufferToBase64Url(cred.response.userHandle);
+          if (cred.response.attestationObject) out.response.attestationObject = bufferToBase64Url(cred.response.attestationObject);
         }
 
-        await maybeSendResultToServer("silent-get-error", errorInfo);
-      }
-    }
-
-    async function runGestureGet() {
-      logLine("Gesture Get started.");
-      setStatus(gestureGetStatusEl, "warn", "Running...");
-      gestureGetOutputEl.textContent = "Running Gesture Get...";
-
-      try {
-        const cred = await navigator.credentials.get(getOptions());
-        const serialized = serializeCredential(cred);
-        gestureGetOutputEl.textContent = stringifyResult(serialized);
-
-        logLine("Gesture Get returned a credential.");
-        setStatus(gestureGetStatusEl, "good", "Credential returned");
-        updateOverallStatus("warn", "Gesture flow worked - verify system UI appeared");
-
-        await maybeSendResultToServer("gesture-get-success", serialized);
-      } catch (err) {
-        const errorInfo = {
-          name: err?.name || "UnknownError",
-          message: err?.message || String(err)
-        };
-
-        gestureGetOutputEl.textContent = stringifyResult(errorInfo);
-        logLine("Gesture Get failed: " + stringifyResult(errorInfo));
-
-        setStatus(gestureGetStatusEl, "warn", "Failed with " + errorInfo.name);
-        updateOverallStatus("warn", "Gesture flow failed or was blocked");
-
-        await maybeSendResultToServer("gesture-get-error", errorInfo);
-      }
-    }
-
-    async function runSilentCreate() {
-      logLine("Silent Create started.");
-      setStatus(silentCreateStatusEl, "warn", "Running...");
-      silentCreateOutputEl.textContent = "Running Silent Create...";
-
-      try {
-        const cred = await navigator.credentials.create(createOptions());
-        const serialized = serializeCredential(cred);
-        silentCreateOutputEl.textContent = stringifyResult(serialized);
-
-        logLine("Silent Create returned a credential.");
-        setStatus(silentCreateStatusEl, "bad", "Credential created");
-        updateOverallStatus("bad", "Potential silent credential creation detected");
-
-        await maybeSendResultToServer("silent-create-success", serialized);
-      } catch (err) {
-        const errorInfo = {
-          name: err?.name || "UnknownError",
-          message: err?.message || String(err)
-        };
-
-        silentCreateOutputEl.textContent = stringifyResult(errorInfo);
-        logLine("Silent Create failed: " + stringifyResult(errorInfo));
-
-        if (errorInfo.name === "NotAllowedError") {
-          setStatus(silentCreateStatusEl, "good", "Blocked / NotAllowedError");
-          updateOverallStatus("good", "Silent create appears blocked");
-        } else {
-          setStatus(silentCreateStatusEl, "warn", "Failed with " + errorInfo.name);
-          updateOverallStatus("warn", "Review required");
+        if (typeof cred.getClientExtensionResults === 'function') {
+          out.clientExtensionResults = cred.getClientExtensionResults();
         }
 
-        await maybeSendResultToServer("silent-create-error", errorInfo);
+        return out;
       }
-    }
 
-    async function runGestureCreate() {
-      logLine("Gesture Create started.");
-      setStatus(gestureCreateStatusEl, "warn", "Running...");
-      gestureCreateOutputEl.textContent = "Running Gesture Create...";
+      function randomBytes(length) {
+        const arr = new Uint8Array(length);
+        crypto.getRandomValues(arr);
+        return arr;
+      }
 
-      try {
-        const cred = await navigator.credentials.create(createOptions());
-        const serialized = serializeCredential(cred);
-        gestureCreateOutputEl.textContent = stringifyResult(serialized);
-
-        logLine("Gesture Create returned a credential.");
-        setStatus(gestureCreateStatusEl, "good", "Credential created");
-        updateOverallStatus("warn", "Gesture create worked - verify system UI appeared");
-
-        await maybeSendResultToServer("gesture-create-success", serialized);
-      } catch (err) {
-        const errorInfo = {
-          name: err?.name || "UnknownError",
-          message: err?.message || String(err)
+      function getOptions() {
+        return {
+          publicKey: {
+            challenge: randomBytes(32),
+            timeout: 60000,
+            userVerification: 'required',
+            rpId: window.location.hostname
+          }
         };
-
-        gestureCreateOutputEl.textContent = stringifyResult(errorInfo);
-        logLine("Gesture Create failed: " + stringifyResult(errorInfo));
-
-        setStatus(gestureCreateStatusEl, "warn", "Failed with " + errorInfo.name);
-        updateOverallStatus("warn", "Gesture create failed or was blocked");
-
-        await maybeSendResultToServer("gesture-create-error", errorInfo);
-      }
-    }
-
-    document.getElementById("runSilentGetBtn").addEventListener("click", runSilentGet);
-    document.getElementById("runGestureGetBtn").addEventListener("click", runGestureGet);
-    document.getElementById("runSilentCreateBtn").addEventListener("click", runSilentCreate);
-    document.getElementById("runGestureCreateBtn").addEventListener("click", runGestureCreate);
-
-    document.getElementById("copyNotesBtn").addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(manualNotesEl.value);
-        logLine("Manual notes copied to clipboard.");
-      } catch (err) {
-        logLine("Failed to copy manual notes: " + (err?.message || err));
-      }
-    });
-
-    document.getElementById("copyFullLogBtn").addEventListener("click", async () => {
-      const fullPayload = [
-        "=== Environment ===",
-        "Origin: " + window.location.origin,
-        "User Agent: " + navigator.userAgent,
-        "Loaded At: " + new Date().toISOString(),
-        "",
-        "=== Silent Get Output ===",
-        silentGetOutputEl.textContent,
-        "",
-        "=== Gesture Get Output ===",
-        gestureGetOutputEl.textContent,
-        "",
-        "=== Silent Create Output ===",
-        silentCreateOutputEl.textContent,
-        "",
-        "=== Gesture Create Output ===",
-        gestureCreateOutputEl.textContent,
-        "",
-        "=== Manual Notes ===",
-        manualNotesEl.value,
-        "",
-        "=== Execution Log ===",
-        executionLogEl.textContent
-      ].join("\n");
-
-      try {
-        await navigator.clipboard.writeText(fullPayload);
-        logLine("Full test log copied to clipboard.");
-      } catch (err) {
-        logLine("Failed to copy full log: " + (err?.message || err));
-      }
-    });
-
-    document.getElementById("clearLogBtn").addEventListener("click", () => {
-      executionLogEl.textContent = "Execution log is empty.";
-      silentGetOutputEl.textContent = "No output yet.";
-      gestureGetOutputEl.textContent = "No output yet.";
-      silentCreateOutputEl.textContent = "No output yet.";
-      gestureCreateOutputEl.textContent = "No output yet.";
-
-      setStatus(silentGetStatusEl, "idle", "Not run");
-      setStatus(gestureGetStatusEl, "idle", "Not run");
-      setStatus(silentCreateStatusEl, "idle", "Not run");
-      setStatus(gestureCreateStatusEl, "idle", "Not run");
-      updateOverallStatus("idle", "Idle");
-    });
-
-    window.addEventListener("load", async () => {
-      logLine("Page loaded.");
-      if (!("PublicKeyCredential" in window)) {
-        updateOverallStatus("warn", "WebAuthn not supported in this environment");
-        logLine("PublicKeyCredential is not available.");
-        return;
       }
 
-      if (localStorage.getItem(LS_KEY) === "true") {
-        logLine("Auto-run Silent Get triggered on page load.");
-        await runSilentGet();
+      function createOptions() {
+        return {
+          publicKey: {
+            challenge: randomBytes(32),
+            rp: {
+              name: 'RF Test Site Passkey Test',
+              id: window.location.hostname
+            },
+            user: {
+              id: randomBytes(16),
+              name: 'security-test@' + window.location.hostname,
+              displayName: 'Security Test User'
+            },
+            pubKeyCredParams: [
+              { type: 'public-key', alg: -7 },
+              { type: 'public-key', alg: -257 }
+            ],
+            timeout: 60000,
+            authenticatorSelection: {
+              residentKey: 'preferred',
+              userVerification: 'required'
+            },
+            attestation: 'none'
+          }
+        };
       }
-    });
+
+      async function runSilentGet() {
+        log('Silent Get started');
+        setPanelStatus('running');
+        setStatus(silentGetStatusEl, 'warn', 'Running...');
+        silentGetOutputEl.textContent = 'Running Silent Get...';
+
+        try {
+          const cred = await navigator.credentials.get(getOptions());
+          const result = serializeCredential(cred);
+          silentGetOutputEl.textContent = stringifyResult(result);
+
+          log('Silent Get returned a credential', 'RESULT');
+          setStatus(silentGetStatusEl, 'bad', 'Credential returned');
+          updateOverallStatus('bad', 'Potential vulnerability detected');
+        } catch (err) {
+          const errorInfo = {
+            name: err?.name || 'UnknownError',
+            message: err?.message || String(err)
+          };
+
+          silentGetOutputEl.textContent = stringifyResult(errorInfo);
+          log('Silent Get failed: ' + stringifyResult(errorInfo), 'RESULT');
+
+          if (errorInfo.name === 'NotAllowedError') {
+            setStatus(silentGetStatusEl, 'good', 'Blocked / NotAllowedError');
+            updateOverallStatus('good', 'Silent execution appears blocked');
+          } else {
+            setStatus(silentGetStatusEl, 'warn', 'Failed with ' + errorInfo.name);
+            updateOverallStatus('warn', 'Review required');
+          }
+        } finally {
+          setPanelStatus('idle');
+        }
+      }
+
+      async function runGestureGet() {
+        log('Gesture Get started');
+        setPanelStatus('running');
+        setStatus(gestureGetStatusEl, 'warn', 'Running...');
+        gestureGetOutputEl.textContent = 'Running Gesture Get...';
+
+        try {
+          const cred = await navigator.credentials.get(getOptions());
+          const result = serializeCredential(cred);
+          gestureGetOutputEl.textContent = stringifyResult(result);
+
+          log('Gesture Get returned a credential', 'RESULT');
+          setStatus(gestureGetStatusEl, 'good', 'Credential returned');
+          updateOverallStatus('warn', 'Verify visible system UI appeared');
+        } catch (err) {
+          const errorInfo = {
+            name: err?.name || 'UnknownError',
+            message: err?.message || String(err)
+          };
+
+          gestureGetOutputEl.textContent = stringifyResult(errorInfo);
+          log('Gesture Get failed: ' + stringifyResult(errorInfo), 'RESULT');
+          setStatus(gestureGetStatusEl, 'warn', 'Failed with ' + errorInfo.name);
+          updateOverallStatus('warn', 'Gesture flow failed or was blocked');
+        } finally {
+          setPanelStatus('idle');
+        }
+      }
+
+      async function runSilentCreate() {
+        log('Silent Create started');
+        setPanelStatus('running');
+        setStatus(silentCreateStatusEl, 'warn', 'Running...');
+        silentCreateOutputEl.textContent = 'Running Silent Create...';
+
+        try {
+          const cred = await navigator.credentials.create(createOptions());
+          const result = serializeCredential(cred);
+          silentCreateOutputEl.textContent = stringifyResult(result);
+
+          log('Silent Create returned a credential', 'RESULT');
+          setStatus(silentCreateStatusEl, 'bad', 'Credential created');
+          updateOverallStatus('bad', 'Potential silent credential creation detected');
+        } catch (err) {
+          const errorInfo = {
+            name: err?.name || 'UnknownError',
+            message: err?.message || String(err)
+          };
+
+          silentCreateOutputEl.textContent = stringifyResult(errorInfo);
+          log('Silent Create failed: ' + stringifyResult(errorInfo), 'RESULT');
+
+          if (errorInfo.name === 'NotAllowedError') {
+            setStatus(silentCreateStatusEl, 'good', 'Blocked / NotAllowedError');
+            updateOverallStatus('good', 'Silent create appears blocked');
+          } else {
+            setStatus(silentCreateStatusEl, 'warn', 'Failed with ' + errorInfo.name);
+            updateOverallStatus('warn', 'Review required');
+          }
+        } finally {
+          setPanelStatus('idle');
+        }
+      }
+
+      async function runGestureCreate() {
+        log('Gesture Create started');
+        setPanelStatus('running');
+        setStatus(gestureCreateStatusEl, 'warn', 'Running...');
+        gestureCreateOutputEl.textContent = 'Running Gesture Create...';
+
+        try {
+          const cred = await navigator.credentials.create(createOptions());
+          const result = serializeCredential(cred);
+          gestureCreateOutputEl.textContent = stringifyResult(result);
+
+          log('Gesture Create returned a credential', 'RESULT');
+          setStatus(gestureCreateStatusEl, 'good', 'Credential created');
+          updateOverallStatus('warn', 'Verify visible system UI appeared');
+        } catch (err) {
+          const errorInfo = {
+            name: err?.name || 'UnknownError',
+            message: err?.message || String(err)
+          };
+
+          gestureCreateOutputEl.textContent = stringifyResult(errorInfo);
+          log('Gesture Create failed: ' + stringifyResult(errorInfo), 'RESULT');
+          setStatus(gestureCreateStatusEl, 'warn', 'Failed with ' + errorInfo.name);
+          updateOverallStatus('warn', 'Gesture create failed or was blocked');
+        } finally {
+          setPanelStatus('idle');
+        }
+      }
+
+      function buildSummaryText() {
+        return [
+          '=== PASSKEY TEST SUMMARY ===',
+          'Origin: ' + window.location.origin,
+          'Loaded At: ' + new Date().toISOString(),
+          '',
+          'Silent Get Status: ' + silentGetStatusEl.textContent,
+          silentGetOutputEl.textContent,
+          '',
+          'Gesture Get Status: ' + gestureGetStatusEl.textContent,
+          gestureGetOutputEl.textContent,
+          '',
+          'Silent Create Status: ' + silentCreateStatusEl.textContent,
+          silentCreateOutputEl.textContent,
+          '',
+          'Gesture Create Status: ' + gestureCreateStatusEl.textContent,
+          gestureCreateOutputEl.textContent,
+          '',
+          'Manual Notes:',
+          manualNotesEl.value || '(empty)',
+          '',
+          'Execution Log:',
+          logEl.innerText
+        ].join('\n');
+      }
+
+      toggleBtn.addEventListener('click', togglePanel);
+
+      originEl.textContent = window.location.origin;
+      uaEl.textContent = navigator.userAgent;
+      loadedAtEl.textContent = new Date().toLocaleString();
+      webauthnSupportEl.textContent = ('PublicKeyCredential' in window) ? 'Yes' : 'No';
+
+      autoRunSilentGetEl.checked = localStorage.getItem(LS_KEY) === 'true';
+      autoRunSilentGetEl.addEventListener('change', () => {
+        localStorage.setItem(LS_KEY, autoRunSilentGetEl.checked ? 'true' : 'false');
+        log('Auto-run Silent Get set to: ' + autoRunSilentGetEl.checked);
+      });
+
+      document.getElementById('runSilentGetBtn').addEventListener('click', runSilentGet);
+      document.getElementById('runGestureGetBtn').addEventListener('click', runGestureGet);
+      document.getElementById('runSilentCreateBtn').addEventListener('click', runSilentCreate);
+      document.getElementById('runGestureCreateBtn').addEventListener('click', runGestureCreate);
+
+      document.getElementById('copyNotesBtn').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(manualNotesEl.value);
+          log('Manual notes copied');
+        } catch (e) {
+          log('Failed to copy manual notes: ' + (e?.message || e), 'ERROR');
+        }
+      });
+
+      document.getElementById('copySummaryBtn').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(buildSummaryText());
+          log('Test summary copied');
+        } catch (e) {
+          log('Failed to copy test summary: ' + (e?.message || e), 'ERROR');
+        }
+      });
+
+      document.getElementById('copyFullLogBtn').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(buildSummaryText());
+          log('Full log copied');
+        } catch (e) {
+          log('Failed to copy full log: ' + (e?.message || e), 'ERROR');
+        }
+      });
+
+      document.getElementById('clearLogBtn').addEventListener('click', () => {
+        logEl.innerHTML = '';
+        silentGetOutputEl.textContent = 'No output yet.';
+        gestureGetOutputEl.textContent = 'No output yet.';
+        silentCreateOutputEl.textContent = 'No output yet.';
+        gestureCreateOutputEl.textContent = 'No output yet.';
+
+        setStatus(silentGetStatusEl, 'idle', 'Not run');
+        setStatus(gestureGetStatusEl, 'idle', 'Not run');
+        setStatus(silentCreateStatusEl, 'idle', 'Not run');
+        setStatus(gestureCreateStatusEl, 'idle', 'Not run');
+        updateOverallStatus('idle', 'Idle');
+      });
+
+      log('Passkey page ready');
+      setPanelStatus('ready');
+
+      if (!('PublicKeyCredential' in window)) {
+        log('PublicKeyCredential is not available in this environment', 'WARN');
+        updateOverallStatus('warn', 'WebAuthn not supported');
+      }
+
+      window.addEventListener('load', async () => {
+        if (localStorage.getItem(LS_KEY) === 'true' && 'PublicKeyCredential' in window) {
+          log('Auto-run Silent Get triggered');
+          await runSilentGet();
+        }
+      });
+    })();
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
