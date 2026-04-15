@@ -132,6 +132,84 @@
     </div>
 
     <div class="row g-4 mt-1">
+      <div class="col-lg-6">
+        <div class="test-card">
+          <div class="section-title">5) Conditional Mediation / Passkey Autofill</div>
+          <p class="muted-small">
+            Tests passkey autofill UI with <code>mediation: "conditional"</code> and a username field using <code>autocomplete="username webauthn"</code>.
+          </p>
+          <div class="mb-2">
+            <label for="conditionalUser" class="form-label">Username field</label>
+            <input id="conditionalUser" name="username" autocomplete="username webauthn" class="form-control" placeholder="security-test@example.com">
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+            <button class="btn btn-sm btn-brand" id="runConditionalGetBtn">Run Conditional Get</button>
+            <span id="conditionalGetStatus" class="status-pill status-idle">Not run</span>
+          </div>
+          <pre id="conditionalGetOutput" class="output">No output yet.</pre>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="test-card">
+          <div class="section-title">6) RP ID Boundary Matrix</div>
+          <p class="muted-small">
+            Select how the RP ID is built for get/create calls. Invalid modes should fail cleanly.
+          </p>
+          <div class="mb-2">
+            <label for="rpIdMode" class="form-label">RP ID mode</label>
+            <select id="rpIdMode" class="form-select">
+              <option value="hostname">Current hostname</option>
+              <option value="omitted">Omitted RP ID</option>
+              <option value="invalid">Invalid sibling domain</option>
+              <option value="custom">Custom value</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label for="rpIdCustom" class="form-label">Custom RP ID</label>
+            <input id="rpIdCustom" class="form-control" placeholder="example.com">
+          </div>
+          <div class="muted-small">
+            Current hostname: <span id="rpIdCurrent" class="mono"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="test-card">
+          <div class="section-title">7) Gesture Delay Chain</div>
+          <p class="muted-small">
+            Runs WebAuthn after different async boundaries to test whether stale user activation is accepted.
+          </p>
+          <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label for="delayAction" class="form-label">Action</label>
+              <select id="delayAction" class="form-select">
+                <option value="get">navigator.credentials.get()</option>
+                <option value="create">navigator.credentials.create()</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="delayMode" class="form-label">Delay mode</label>
+              <select id="delayMode" class="form-select">
+                <option value="immediate">Immediate</option>
+                <option value="microtask">Promise microtask</option>
+                <option value="timeout0">setTimeout(0)</option>
+                <option value="timeout500">500ms</option>
+                <option value="timeout2000">2s</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <button id="runDelayChainBtn" class="btn btn-sm btn-brand">Run Delay Chain</button>
+              <span id="delayChainStatus" class="status-pill status-idle ms-2">Not run</span>
+            </div>
+          </div>
+          <pre id="delayChainOutput" class="output">No output yet.</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mt-1">
       <div class="col-12">
         <div class="test-card" id="notesCard">
           <div class="section-title">Manual Notes</div>
@@ -169,14 +247,18 @@
         silentGet: $('#silentGetStatus'),
         gestureGet: $('#gestureGetStatus'),
         silentCreate: $('#silentCreateStatus'),
-        gestureCreate: $('#gestureCreateStatus')
+        gestureCreate: $('#gestureCreateStatus'),
+        conditionalGet: $('#conditionalGetStatus'),
+        delayChain: $('#delayChainStatus')
       };
 
       const outputEls = {
         silentGet: $('#silentGetOutput'),
         gestureGet: $('#gestureGetOutput'),
         silentCreate: $('#silentCreateOutput'),
-        gestureCreate: $('#gestureCreateOutput')
+        gestureCreate: $('#gestureCreateOutput'),
+        conditionalGet: $('#conditionalGetOutput'),
+        delayChain: $('#delayChainOutput')
       };
 
       function updateOverall(type, text) {
@@ -230,19 +312,33 @@
         return { ok: true };
       }
 
+      function selectedRpId() {
+        const mode = $('#rpIdMode')?.value || 'hostname';
+        if (mode === 'omitted') return null;
+        if (mode === 'invalid') return 'invalid-' + (window.location.hostname || 'local-test') + '.example';
+        if (mode === 'custom') return ($('#rpIdCustom')?.value || '').trim() || null;
+        return window.location.hostname || null;
+      }
+
+      function applyRpId(target) {
+        const rpId = selectedRpId();
+        if (rpId) target.rpId = rpId;
+      }
+
       function getOptions() {
         const publicKey = {
           challenge: randomBytes(32),
           timeout: 60000,
           userVerification: 'required'
         };
-        if (window.location.hostname) publicKey.rpId = window.location.hostname;
+        applyRpId(publicKey);
         return { publicKey };
       }
 
       function createOptions() {
         const rp = { name: 'RF Test Site Passkey Test' };
-        if (window.location.hostname) rp.id = window.location.hostname;
+        const rpId = selectedRpId();
+        if (rpId) rp.id = rpId;
         return {
           publicKey: {
             challenge: randomBytes(32),
@@ -317,6 +413,81 @@
         }
       }
 
+      async function runConditionalGet() {
+        const check = preflight();
+        log('Conditional Get started');
+        RFTest.setStatus(statusEls.conditionalGet, 'warn', 'Running...');
+        outputEls.conditionalGet.textContent = 'Running Conditional Get...';
+
+        if (!check.ok) {
+          const result = { name: 'EnvironmentUnavailable', message: check.reason };
+          outputEls.conditionalGet.textContent = safeStringify(result);
+          RFTest.setStatus(statusEls.conditionalGet, 'warn', 'Environment unavailable');
+          log('Conditional Get skipped: ' + check.reason, 'WARN');
+          return;
+        }
+
+        if (!PublicKeyCredential.isConditionalMediationAvailable) {
+          const result = { name: 'Unsupported', message: 'PublicKeyCredential.isConditionalMediationAvailable is not exposed.' };
+          outputEls.conditionalGet.textContent = safeStringify(result);
+          RFTest.setStatus(statusEls.conditionalGet, 'warn', 'Not exposed');
+          log('Conditional mediation support API not exposed', 'WARN');
+          return;
+        }
+
+        try {
+          const available = await PublicKeyCredential.isConditionalMediationAvailable();
+          if (!available) {
+            const result = { name: 'Unavailable', message: 'Conditional mediation reported unavailable.' };
+            outputEls.conditionalGet.textContent = safeStringify(result);
+            RFTest.setStatus(statusEls.conditionalGet, 'warn', 'Unavailable');
+            log('Conditional mediation unavailable', 'WARN');
+            return;
+          }
+
+          const options = getOptions();
+          options.mediation = 'conditional';
+          const cred = await navigator.credentials.get(options);
+          const result = serializeCredential(cred);
+          outputEls.conditionalGet.textContent = safeStringify(result);
+          RFTest.setStatus(statusEls.conditionalGet, cred ? 'good' : 'warn', cred ? 'Credential returned' : 'No credential');
+          updateOverall('warn', 'Review conditional mediation UI');
+          log('Conditional Get completed', 'RESULT');
+        } catch (err) {
+          const errorInfo = { name: err?.name || 'UnknownError', message: err?.message || String(err) };
+          outputEls.conditionalGet.textContent = safeStringify(errorInfo);
+          RFTest.setStatus(statusEls.conditionalGet, 'warn', 'Failed with ' + errorInfo.name);
+          log('Conditional Get failed: ' + safeStringify(errorInfo), 'RESULT');
+        }
+      }
+
+      function runWithDelayChain() {
+        const action = $('#delayAction').value;
+        const mode = $('#delayMode').value;
+        const config = {
+          key: 'delayChain',
+          label: 'Delay Chain ' + action + ' / ' + mode,
+          action,
+          expectedSilentBlock: false
+        };
+
+        outputEls.delayChain.textContent = 'Scheduled ' + config.label + '...';
+        RFTest.setStatus(statusEls.delayChain, 'warn', 'Scheduled');
+        log(config.label + ' scheduled');
+
+        if (mode === 'immediate') {
+          runPasskeyTest(config);
+        } else if (mode === 'microtask') {
+          Promise.resolve().then(() => runPasskeyTest(config));
+        } else if (mode === 'timeout0') {
+          setTimeout(() => runPasskeyTest(config), 0);
+        } else if (mode === 'timeout500') {
+          setTimeout(() => runPasskeyTest(config), 500);
+        } else {
+          setTimeout(() => runPasskeyTest(config), 2000);
+        }
+      }
+
       function buildSummaryText() {
         return [
           '=== PASSKEY TEST SUMMARY ===',
@@ -336,6 +507,15 @@
           'Gesture Create Status: ' + statusEls.gestureCreate.textContent,
           outputEls.gestureCreate.textContent,
           '',
+          'Conditional Get Status: ' + statusEls.conditionalGet.textContent,
+          outputEls.conditionalGet.textContent,
+          '',
+          'Delay Chain Status: ' + statusEls.delayChain.textContent,
+          outputEls.delayChain.textContent,
+          '',
+          'RP ID Mode: ' + ($('#rpIdMode')?.value || 'hostname'),
+          'Custom RP ID: ' + ($('#rpIdCustom')?.value || ''),
+          '',
           'Manual Notes:',
           $('#manualNotes').value || '(empty)',
           '',
@@ -350,6 +530,7 @@
       $('#loadedAt').textContent = new Date().toLocaleString();
       $('#secureContext').textContent = window.isSecureContext ? 'Yes' : 'No';
       $('#webauthnSupport').textContent = ('PublicKeyCredential' in window) ? 'Yes' : 'No';
+      $('#rpIdCurrent').textContent = window.location.hostname || '(none)';
 
       const check = preflight();
       if (!check.ok) {
@@ -376,6 +557,9 @@
       $('#runGestureGetBtn').addEventListener('click', () => runPasskeyTest({ key: 'gestureGet', label: 'Gesture Get', action: 'get', expectedSilentBlock: false }));
       $('#runSilentCreateBtn').addEventListener('click', () => runPasskeyTest({ key: 'silentCreate', label: 'Silent Create', action: 'create', expectedSilentBlock: true }));
       $('#runGestureCreateBtn').addEventListener('click', () => runPasskeyTest({ key: 'gestureCreate', label: 'Gesture Create', action: 'create', expectedSilentBlock: false }));
+      $('#runConditionalGetBtn').addEventListener('click', runConditionalGet);
+      $('#runDelayChainBtn').addEventListener('click', runWithDelayChain);
+      $('#rpIdMode').addEventListener('change', () => log('RP ID mode set to: ' + $('#rpIdMode').value));
 
       $('#copyNotesBtn').addEventListener('click', () => RFTest.copyText($('#manualNotes').value, { log, label: 'Manual notes', fallbackHost: $('#notesCard') }));
       $('#copySummaryBtn').addEventListener('click', () => RFTest.copyText(buildSummaryText(), { log, label: 'Test summary', fallbackHost: $('#notesCard') }));

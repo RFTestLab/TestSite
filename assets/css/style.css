@@ -249,6 +249,77 @@ textarea.form-control {
   margin-top: 10px;
 }
 
+.rf-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.rf-test-zone {
+  position: relative;
+  min-height: 190px;
+  padding: 14px;
+  border: 1px dashed #b8d8c3;
+  border-radius: 8px;
+  background: #fbfefc;
+}
+
+.rf-trap-layer {
+  position: relative;
+  min-height: 170px;
+}
+
+.rf-covered-real {
+  position: absolute;
+  inset: 48px 16px auto 16px;
+}
+
+.rf-fake-overlay {
+  position: absolute;
+  inset: 38px 8px auto 8px;
+  padding: 14px;
+  border: 1px solid #d7e7dc;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .08);
+  z-index: 2;
+}
+
+.rf-offscreen-input {
+  position: absolute;
+  left: -3000px;
+  width: 240px;
+}
+
+.rf-clipped-box {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.rf-zero-box {
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+}
+
+.rf-origin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .9rem;
+}
+
+.rf-origin-table th,
+.rf-origin-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
 @media (max-width: 767.98px) {
   :root {
     --log-height: 180px;
@@ -274,5 +345,9 @@ textarea.form-control {
 
   .rf-frame-box iframe {
     min-height: 360px;
+  }
+
+  .rf-grid-two {
+    grid-template-columns: 1fr;
   }
 }

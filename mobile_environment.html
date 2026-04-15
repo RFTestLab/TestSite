@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mobile Environment Diagnostics</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="rf-page">
+  <a class="btn btn-sm btn-outline-secondary rf-home-btn" href="index.html">Home</a>
+  <button id="panelToggle" class="rf-panel-toggle" title="Toggle control panel" aria-label="Toggle control panel">☰</button>
+
+  <div class="rf-controls" id="controlsPanel">
+    <div class="rf-controls-header">
+      <h6 class="mb-0">Environment controls</h6>
+      <span class="badge text-bg-light" id="panelStatus">ready</span>
+    </div>
+    <div class="d-flex gap-2 flex-wrap mb-3">
+      <button id="refreshBtn" class="btn btn-sm btn-brand">Refresh diagnostics</button>
+      <button id="copyBtn" class="btn btn-sm btn-outline-secondary">Copy report</button>
+      <button id="clearLogBtn" class="btn btn-sm btn-warning">Clear log</button>
+    </div>
+    <p class="muted-small mb-0">
+      Use this in Android Chrome, Samsung Internet, Firefox, app WebView, Chrome Custom Tabs, iOS Safari, and WKWebView.
+    </p>
+  </div>
+
+  <main class="container pt-5">
+    <div class="test-card mb-4">
+      <h1 class="mb-2">Mobile Environment Diagnostics</h1>
+      <p class="lead text-muted mb-0">
+        Static capability page for comparing browser, WebView, autofill, keyboard, viewport, and passkey support.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="test-card">
+          <div class="section-title">Runtime Signals</div>
+          <table class="rf-origin-table">
+            <tbody id="diagnosticsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="test-card">
+          <div class="section-title">Autofill Probe Form</div>
+          <p class="muted-small">Focus these fields and compare OS autofill, keyboard suggestions, password-manager overlay, and WebView behavior.</p>
+          <form id="probeForm" autocomplete="on">
+            <div class="mb-2">
+              <label for="probe-email" class="form-label">Email</label>
+              <input id="probe-email" name="email" autocomplete="username" type="email" class="form-control" placeholder="mobile@example.com">
+            </div>
+            <div class="mb-2">
+              <label for="probe-password" class="form-label">Password</label>
+              <input id="probe-password" name="password" autocomplete="current-password" type="password" class="form-control" placeholder="Password">
+            </div>
+            <div class="mb-2">
+              <label for="probe-card" class="form-label">Card number</label>
+              <input id="probe-card" name="cc-number" autocomplete="cc-number" inputmode="numeric" class="form-control" placeholder="4242 4242 4242 4242">
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="test-card" id="notesCard">
+          <div class="section-title">Manual Notes</div>
+          <textarea id="manualNotes" class="form-control" placeholder="Example:
+- Device:
+- OS version:
+- Browser or host app:
+- WebView / Custom Tab / full browser:
+- Password manager:
+- Autofill path: OS / keyboard / overlay / accessibility:
+- Passkey support:
+- Observed behavior:"></textarea>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="log" class="rf-log"></div>
+
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      const $ = RFTest.$;
+      const log = RFTest.createLogger($('#log'));
+
+      function hasConditionalMediationHint() {
+        return !!(window.PublicKeyCredential && typeof PublicKeyCredential.isConditionalMediationAvailable === 'function');
+      }
+
+      async function conditionalMediationValue() {
+        if (!hasConditionalMediationHint()) return 'API not exposed';
+        try {
+          return String(await PublicKeyCredential.isConditionalMediationAvailable());
+        } catch (err) {
+          return 'Error: ' + (err.message || err);
+        }
+      }
+
+      function viewportInfo() {
+        const vv = window.visualViewport;
+        return {
+          innerWidth,
+          innerHeight,
+          devicePixelRatio,
+          visualViewport: vv ? {
+            width: Math.round(vv.width),
+            height: Math.round(vv.height),
+            offsetTop: Math.round(vv.offsetTop),
+            offsetLeft: Math.round(vv.offsetLeft),
+            scale: vv.scale
+          } : null
+        };
+      }
+
+      async function collectDiagnostics() {
+        return {
+          origin: window.location.origin,
+          protocol: window.location.protocol,
+          secureContext: window.isSecureContext,
+          userAgent: navigator.userAgent,
+          platform: navigator.platform || 'unknown',
+          language: navigator.language,
+          maxTouchPoints: navigator.maxTouchPoints,
+          standaloneDisplay: window.matchMedia('(display-mode: standalone)').matches,
+          navigatorCredentials: !!navigator.credentials,
+          publicKeyCredential: 'PublicKeyCredential' in window,
+          conditionalMediation: await conditionalMediationValue(),
+          clipboard: !!navigator.clipboard,
+          localStorage: testLocalStorage(),
+          viewport: viewportInfo()
+        };
+      }
+
+      function testLocalStorage() {
+        try {
+          const key = 'rf_mobile_env_test';
+          localStorage.setItem(key, '1');
+          localStorage.removeItem(key);
+          return true;
+        } catch (err) {
+          return false;
+        }
+      }
+
+      function renderDiagnostics(data) {
+        $('#diagnosticsTable').innerHTML = Object.keys(data).map((key) => {
+          const value = typeof data[key] === 'object' ? RFTest.safeStringify(data[key]) : String(data[key]);
+          return `<tr><th>${key}</th><td class="mono">${value}</td></tr>`;
+        }).join('');
+      }
+
+      async function refreshDiagnostics() {
+        const data = await collectDiagnostics();
+        renderDiagnostics(data);
+        log('Diagnostics refreshed: ' + RFTest.safeStringify(data), 'ENV');
+      }
+
+      function buildReport() {
+        return [
+          '=== MOBILE ENVIRONMENT REPORT ===',
+          $('#diagnosticsTable').innerText,
+          '',
+          'Manual Notes:',
+          $('#manualNotes').value || '(empty)',
+          '',
+          'Event Log:',
+          $('#log').innerText
+        ].join('\n');
+      }
+
+      function wireProbeEvents() {
+        document.querySelectorAll('#probeForm input').forEach((input) => {
+          ['focus', 'blur', 'input', 'change'].forEach((eventName) => {
+            input.addEventListener(eventName, () => {
+              log(`${input.id} ${eventName}: value="${input.value}" active="${document.activeElement && document.activeElement.id}"`);
+            });
+          });
+        });
+      }
+
+      RFTest.initPanelToggle();
+      wireProbeEvents();
+      refreshDiagnostics();
+
+      if (window.visualViewport) {
+        visualViewport.addEventListener('resize', () => log('visualViewport resize: ' + RFTest.safeStringify(viewportInfo()), 'VIEWPORT'));
+        visualViewport.addEventListener('scroll', () => log('visualViewport scroll: ' + RFTest.safeStringify(viewportInfo()), 'VIEWPORT'));
+      }
+      window.addEventListener('resize', () => log('window resize: ' + RFTest.safeStringify(viewportInfo()), 'VIEWPORT'));
+
+      $('#refreshBtn').addEventListener('click', refreshDiagnostics);
+      $('#copyBtn').addEventListener('click', () => RFTest.copyText(buildReport(), { log, label: 'Mobile environment report', fallbackHost: $('#notesCard') }));
+      $('#clearLogBtn').addEventListener('click', () => { $('#log').innerHTML = ''; });
+
+      log('Mobile environment page ready');
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Advanced Mobile Autofill Tests</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="rf-page">
+  <a class="btn btn-sm btn-outline-secondary rf-home-btn" href="index.html">Home</a>
+  <button id="panelToggle" class="rf-panel-toggle" title="Toggle control panel" aria-label="Toggle control panel">☰</button>
+
+  <div class="rf-controls" id="controlsPanel">
+    <div class="rf-controls-header">
+      <h6 class="mb-0">Autofill lab controls</h6>
+      <span class="badge text-bg-light" id="panelStatus">ready</span>
+    </div>
+    <div class="d-flex gap-2 flex-wrap mb-3">
+      <button id="snapshotBtn" class="btn btn-sm btn-info">Snapshot fields</button>
+      <button id="clearLogBtn" class="btn btn-sm btn-warning">Clear log</button>
+    </div>
+    <p class="muted-small mb-0">
+      These tests focus on mobile password-manager targeting: DOM timing, field replacement,
+      hidden traps, overlays, and component boundaries.
+    </p>
+  </div>
+
+  <main class="container pt-5">
+    <div class="test-card mb-4">
+      <h1 class="mb-2">Advanced Mobile Autofill Tests</h1>
+      <p class="lead text-muted mb-0">
+        Manual edge-case lab for Android/iOS autofill behavior outside the basic iframe scenarios.
+      </p>
+    </div>
+
+    <div class="rf-grid-two">
+      <section class="test-card">
+        <div class="section-title">1) Dynamic Form Injection</div>
+        <p class="muted-small">Insert a credential form after a tap or delay and observe whether mobile autofill rescans.</p>
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <button class="btn btn-sm btn-brand" data-inject-delay="0">Inject now</button>
+          <button class="btn btn-sm btn-outline-success" data-inject-delay="500">Inject after 500ms</button>
+          <button class="btn btn-sm btn-outline-success" data-inject-delay="2000">Inject after 2s</button>
+          <button id="clearDynamicBtn" class="btn btn-sm btn-outline-secondary">Clear</button>
+        </div>
+        <div id="dynamicZone" class="rf-test-zone" aria-live="polite">
+          <span class="muted-small">No injected form yet.</span>
+        </div>
+      </section>
+
+      <section class="test-card">
+        <div class="section-title">2) Input Replacement Race</div>
+        <p class="muted-small">Focus a field, then replace the DOM node while keeping the same visual position.</p>
+        <div class="mb-2">
+          <label for="replaceDelay" class="form-label">Replacement delay</label>
+          <select id="replaceDelay" class="form-select">
+            <option value="0">Immediate</option>
+            <option value="250">250ms</option>
+            <option value="1000">1s</option>
+          </select>
+        </div>
+        <form id="replacementForm" autocomplete="on">
+          <div class="mb-2">
+            <label for="race-email" class="form-label">Email</label>
+            <input id="race-email" name="email" autocomplete="username" class="form-control" placeholder="race@example.com">
+          </div>
+          <div class="mb-2">
+            <label for="race-password" class="form-label">Password</label>
+            <input id="race-password" name="password" autocomplete="current-password" type="password" class="form-control" placeholder="Password">
+          </div>
+        </form>
+      </section>
+
+      <section class="test-card">
+        <div class="section-title">3) Autocomplete Mutation</div>
+        <p class="muted-small">Start with harmless fields, then mutate names/types/autocomplete hints into credential fields.</p>
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <button id="mutateToCredentialBtn" class="btn btn-sm btn-brand">Mutate to credentials</button>
+          <button id="resetMutationBtn" class="btn btn-sm btn-outline-secondary">Reset</button>
+        </div>
+        <form id="mutationForm" autocomplete="on">
+          <div class="mb-2">
+            <label for="mut-a" class="form-label">Search</label>
+            <input id="mut-a" name="search" autocomplete="off" class="form-control" placeholder="Search query">
+          </div>
+          <div class="mb-2">
+            <label for="mut-b" class="form-label">Note</label>
+            <input id="mut-b" name="note" autocomplete="off" class="form-control" placeholder="Private note">
+          </div>
+        </form>
+      </section>
+
+      <section class="test-card">
+        <div class="section-title">4) Covered Input Capture</div>
+        <p class="muted-small">Real credential fields sit under a fake visible UI layer.</p>
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <button id="toggleOverlayPointerBtn" class="btn btn-sm btn-outline-secondary">Toggle overlay pointer-events</button>
+          <button id="toggleOverlayOpacityBtn" class="btn btn-sm btn-outline-secondary">Toggle overlay opacity</button>
+        </div>
+        <div class="rf-test-zone rf-trap-layer">
+          <form id="coveredForm" class="rf-covered-real" autocomplete="on">
+            <input id="covered-email" name="email" autocomplete="username" class="form-control mb-2" placeholder="covered@example.com">
+            <input id="covered-password" name="password" autocomplete="current-password" type="password" class="form-control" placeholder="Covered password">
+          </form>
+          <div id="fakeOverlay" class="rf-fake-overlay">
+            <strong>Fake coupon lookup</strong>
+            <p class="muted-small mb-2">This visible layer is not the real credential form.</p>
+            <button type="button" class="btn btn-sm btn-dark">Find coupon</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="test-card">
+        <div class="section-title">5) Hidden Real Form / Visible Decoy</div>
+        <p class="muted-small">A harmless visible form is paired with a credential form hidden by different CSS techniques.</p>
+        <div class="mb-2">
+          <label for="hiddenMode" class="form-label">Hidden credential form mode</label>
+          <select id="hiddenMode" class="form-select">
+            <option value="display">display:none</option>
+            <option value="opacity">opacity:0</option>
+            <option value="offscreen">offscreen</option>
+            <option value="clipped">clipped 1x1</option>
+            <option value="zero">0x0</option>
+            <option value="visible">visible control</option>
+          </select>
+        </div>
+        <form id="decoyForm" autocomplete="on" class="mb-3">
+          <label for="decoy-search" class="form-label">Visible search form</label>
+          <input id="decoy-search" name="search" autocomplete="off" class="form-control" placeholder="Search">
+        </form>
+        <div id="hiddenTrapHost">
+          <form id="hiddenTrapForm" autocomplete="on">
+            <input id="trap-email" name="email" autocomplete="username" class="form-control mb-2" placeholder="trap@example.com">
+            <input id="trap-password" name="password" autocomplete="current-password" type="password" class="form-control" placeholder="Trap password">
+          </form>
+        </div>
+      </section>
+
+      <section class="test-card">
+        <div class="section-title">6) Shadow DOM Credential Fields</div>
+        <p class="muted-small">Credential fields inside an open Shadow DOM component.</p>
+        <div id="shadowHost" class="rf-test-zone"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="log" class="rf-log"></div>
+
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      const $ = RFTest.$;
+      const log = RFTest.createLogger($('#log'));
+      let overlayPointerEnabled = true;
+      let overlayDimmed = false;
+
+      function fieldMeta(el) {
+        const rect = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        return {
+          id: el.id || null,
+          name: el.name || null,
+          type: el.type || null,
+          autocomplete: el.getAttribute('autocomplete'),
+          value: el.value || '',
+          display: style.display,
+          visibility: style.visibility,
+          opacity: style.opacity,
+          rect: {
+            x: Math.round(rect.x),
+            y: Math.round(rect.y),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+          },
+          inViewport: rect.bottom > 0 && rect.right > 0 && rect.top < innerHeight && rect.left < innerWidth
+        };
+      }
+
+      function allInputs() {
+        const normalInputs = Array.from(document.querySelectorAll('input'));
+        const shadowInputs = $('#shadowHost').shadowRoot
+          ? Array.from($('#shadowHost').shadowRoot.querySelectorAll('input'))
+          : [];
+        return normalInputs.concat(shadowInputs);
+      }
+
+      function snapshot(reason) {
+        const data = allInputs().map(fieldMeta);
+        log(reason + ': ' + RFTest.safeStringify(data), 'SNAPSHOT');
+      }
+
+      function wireInput(el, label) {
+        ['focus', 'blur', 'input', 'change'].forEach((eventName) => {
+          el.addEventListener(eventName, () => {
+            log(`${label} ${eventName}: ${RFTest.safeStringify(fieldMeta(el))}`);
+          });
+        });
+      }
+
+      function wireAllCurrentInputs() {
+        allInputs().forEach((el) => {
+          if (el.dataset.rfWired) return;
+          el.dataset.rfWired = 'true';
+          wireInput(el, el.id || el.name || 'field');
+        });
+      }
+
+      function injectDynamicForm(delay) {
+        log('Dynamic form injection requested: ' + delay + 'ms');
+        setTimeout(() => {
+          $('#dynamicZone').innerHTML = `
+            <form id="dynamicForm" autocomplete="on">
+              <div class="mb-2">
+                <label for="dyn-email" class="form-label">Injected email</label>
+                <input id="dyn-email" name="email" autocomplete="username" class="form-control" placeholder="dynamic@example.com">
+              </div>
+              <div class="mb-2">
+                <label for="dyn-password" class="form-label">Injected password</label>
+                <input id="dyn-password" name="password" autocomplete="current-password" type="password" class="form-control" placeholder="Dynamic password">
+              </div>
+            </form>
+          `;
+          wireAllCurrentInputs();
+          snapshot('dynamic form injected');
+        }, delay);
+      }
+
+      function replaceInput(input) {
+        const clone = input.cloneNode(true);
+        clone.value = '';
+        clone.id = input.id + '-replaced';
+        clone.name = input.name + '-replaced';
+        clone.dataset.replaced = 'true';
+        input.replaceWith(clone);
+        wireInput(clone, clone.id);
+        log('Input replaced: ' + input.id + ' -> ' + clone.id, 'RACE');
+        snapshot('after input replacement');
+      }
+
+      function resetMutation() {
+        const a = $('#mut-a');
+        const b = $('#mut-b');
+        a.type = 'text';
+        a.name = 'search';
+        a.autocomplete = 'off';
+        a.placeholder = 'Search query';
+        b.type = 'text';
+        b.name = 'note';
+        b.autocomplete = 'off';
+        b.placeholder = 'Private note';
+        log('Mutation form reset');
+        snapshot('mutation reset');
+      }
+
+      function applyHiddenMode() {
+        const host = $('#hiddenTrapHost');
+        host.className = '';
+        host.style.cssText = '';
+        const mode = $('#hiddenMode').value;
+        if (mode === 'display') host.style.display = 'none';
+        else if (mode === 'opacity') host.style.opacity = '0';
+        else if (mode === 'offscreen') host.className = 'rf-offscreen-input';
+        else if (mode === 'clipped') host.className = 'rf-clipped-box';
+        else if (mode === 'zero') host.className = 'rf-zero-box';
+        log('Hidden trap mode: ' + mode);
+        snapshot('hidden trap mode applied');
+      }
+
+      function initShadowDom() {
+        const root = $('#shadowHost').attachShadow({ mode: 'open' });
+        root.innerHTML = `
+          <style>
+            label { display: block; margin-bottom: 4px; font-family: system-ui, sans-serif; }
+            input { box-sizing: border-box; width: 100%; padding: 8px 10px; margin-bottom: 10px; border: 1px solid #ced4da; border-radius: 8px; }
+          </style>
+          <form id="shadowForm" autocomplete="on">
+            <label for="shadow-email">Shadow email</label>
+            <input id="shadow-email" name="email" autocomplete="username" placeholder="shadow@example.com">
+            <label for="shadow-password">Shadow password</label>
+            <input id="shadow-password" name="password" type="password" autocomplete="current-password" placeholder="Shadow password">
+          </form>
+        `;
+      }
+
+      RFTest.initPanelToggle();
+      initShadowDom();
+      wireAllCurrentInputs();
+      applyHiddenMode();
+
+      document.querySelectorAll('[data-inject-delay]').forEach((btn) => {
+        btn.addEventListener('click', () => injectDynamicForm(Number(btn.dataset.injectDelay)));
+      });
+      $('#clearDynamicBtn').addEventListener('click', () => {
+        $('#dynamicZone').innerHTML = '<span class="muted-small">No injected form yet.</span>';
+        log('Dynamic zone cleared');
+      });
+
+      ['race-email', 'race-password'].forEach((id) => {
+        document.getElementById(id).addEventListener('focus', (event) => {
+          if (event.target.dataset.replaced) return;
+          const delay = Number($('#replaceDelay').value);
+          log('Replacement scheduled for ' + id + ': ' + delay + 'ms', 'RACE');
+          setTimeout(() => replaceInput(event.target), delay);
+        });
+      });
+
+      $('#mutateToCredentialBtn').addEventListener('click', () => {
+        const a = $('#mut-a');
+        const b = $('#mut-b');
+        a.name = 'email';
+        a.autocomplete = 'username';
+        a.placeholder = 'mutated@example.com';
+        b.type = 'password';
+        b.name = 'password';
+        b.autocomplete = 'current-password';
+        b.placeholder = 'Mutated password';
+        log('Autocomplete mutation applied');
+        snapshot('autocomplete mutation applied');
+      });
+      $('#resetMutationBtn').addEventListener('click', resetMutation);
+
+      $('#toggleOverlayPointerBtn').addEventListener('click', () => {
+        overlayPointerEnabled = !overlayPointerEnabled;
+        $('#fakeOverlay').style.pointerEvents = overlayPointerEnabled ? 'auto' : 'none';
+        log('Overlay pointer-events: ' + $('#fakeOverlay').style.pointerEvents);
+      });
+      $('#toggleOverlayOpacityBtn').addEventListener('click', () => {
+        overlayDimmed = !overlayDimmed;
+        $('#fakeOverlay').style.opacity = overlayDimmed ? '.35' : '1';
+        log('Overlay opacity: ' + $('#fakeOverlay').style.opacity);
+      });
+
+      $('#hiddenMode').addEventListener('change', applyHiddenMode);
+      $('#snapshotBtn').addEventListener('click', () => snapshot('manual snapshot'));
+      $('#clearLogBtn').addEventListener('click', () => { $('#log').innerHTML = ''; });
+
+      log('Advanced autofill lab ready');
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
